@@ -4,7 +4,7 @@ import type {
   GenerateResponse,
   GenerateSource,
 } from "@/types/api";
-import { MOCK_MEETING_NOTES } from "@/data/mock-meeting-notes";
+import { MOCK_MEETING_NOTES, MOCK_MEETING_NOTES_FR } from "@/data/mock-meeting-notes";
 import { MeetingNotesResultSchema } from "@/schemas/meeting-notes";
 import { callClaude } from "@/lib/claude";
 
@@ -56,8 +56,9 @@ function buildValidatedMockResponse(
   language: "en" | "fr",
   source: GenerateSource = "mock"
 ): GenerateResponse {
+  const baseMock = language === "fr" ? MOCK_MEETING_NOTES_FR : MOCK_MEETING_NOTES;
   const rawResult = {
-    ...MOCK_MEETING_NOTES,
+    ...baseMock,
     language,
   };
 

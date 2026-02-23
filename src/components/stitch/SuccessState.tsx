@@ -1,4 +1,5 @@
 import type { MeetingNotesResult, ConfidenceLevel, DecisionStatus, Priority } from "@/types/meeting-notes";
+import { getLabels } from "@/lib/i18n";
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -16,37 +17,28 @@ const confidenceColor: Record<ConfidenceLevel, string> = {
   low: "bg-red-500",
 };
 
-const confidenceLabel: Record<ConfidenceLevel, string> = {
-  high: "High",
-  medium: "Medium",
-  low: "Low",
-};
-
-const statusStyle: Record<DecisionStatus, { bg: string; text: string; icon: string; label: string }> = {
+const statusStyle: Record<DecisionStatus, { bg: string; text: string; icon: string }> = {
   confirmed: {
     bg: "bg-green-100 dark:bg-green-900/30",
     text: "text-green-800 dark:text-green-400",
     icon: "verified",
-    label: "Confirmed",
   },
   tentative: {
     bg: "bg-yellow-100 dark:bg-yellow-900/30",
     text: "text-yellow-800 dark:text-yellow-400",
     icon: "pending",
-    label: "Tentative",
   },
   rejected: {
     bg: "bg-red-100 dark:bg-red-900/30",
     text: "text-red-800 dark:text-red-400",
     icon: "cancel",
-    label: "Rejected",
   },
 };
 
-const priorityStyle: Record<Priority, { bg: string; text: string; label: string }> = {
-  high: { bg: "bg-red-100 dark:bg-red-900/30", text: "text-red-700 dark:text-red-400", label: "HIGH" },
-  medium: { bg: "bg-orange-100 dark:bg-orange-900/30", text: "text-orange-700 dark:text-orange-400", label: "MED" },
-  low: { bg: "bg-slate-100 dark:bg-slate-700", text: "text-slate-600 dark:text-slate-300", label: "LOW" },
+const priorityStyle: Record<Priority, { bg: string; text: string }> = {
+  high: { bg: "bg-red-100 dark:bg-red-900/30", text: "text-red-700 dark:text-red-400" },
+  medium: { bg: "bg-orange-100 dark:bg-orange-900/30", text: "text-orange-700 dark:text-orange-400" },
+  low: { bg: "bg-slate-100 dark:bg-slate-700", text: "text-slate-600 dark:text-slate-300" },
 };
 
 // Deterministic avatar colours keyed off the initial letter
@@ -68,6 +60,8 @@ interface SuccessStateProps {
 }
 
 export default function SuccessState({ data, source }: SuccessStateProps) {
+  const t = getLabels(data.language);
+
   return (
     <section className="flex flex-col bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden">
       {/* ── Header ─────────────────────────────────────────────── */}
@@ -77,16 +71,16 @@ export default function SuccessState({ data, source }: SuccessStateProps) {
             check_circle
           </span>
           <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-            Processed Notes
+            {t.processedNotes}
           </h2>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-slate-500 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-1 rounded-full shadow-sm">
-            Source: {source === "claude" ? "Claude" : "Mock"}
+            {t.sourceLabel}: {source === "claude" ? t.sourceClaude : t.sourceMock}
           </span>
           <span className="text-xs font-medium text-slate-500 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-1 rounded-full shadow-sm flex items-center gap-1">
             <span className={`w-1.5 h-1.5 rounded-full ${confidenceColor[data.confidence]}`} />
-            AI Confidence: {confidenceLabel[data.confidence]}
+            {t.aiConfidence}: {t.confidence[data.confidence]}
           </span>
         </div>
       </div>
@@ -100,7 +94,7 @@ export default function SuccessState({ data, source }: SuccessStateProps) {
             <div className="bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
               <h3 className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-4">
                 <span className="material-symbols-outlined text-primary text-lg">summarize</span>
-                Executive Summary
+                {t.executiveSummary}
               </h3>
               <ul className="space-y-3">
                 {data.summary.map((bullet, i) => (
@@ -122,7 +116,7 @@ export default function SuccessState({ data, source }: SuccessStateProps) {
             <div className="space-y-4">
               <h3 className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider px-1">
                 <span className="material-symbols-outlined text-primary text-lg">gavel</span>
-                Key Decisions
+                {t.keyDecisions}
               </h3>
               {data.decisions.map((d, i) => {
                 const s = statusStyle[d.status];
@@ -140,7 +134,7 @@ export default function SuccessState({ data, source }: SuccessStateProps) {
                         className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${s.bg} ${s.text} shrink-0 ml-3`}
                       >
                         <span className="material-symbols-outlined text-[14px]">{s.icon}</span>
-                        {s.label}
+                        {t.decisionStatus[d.status]}
                       </span>
                     </div>
 
@@ -151,7 +145,7 @@ export default function SuccessState({ data, source }: SuccessStateProps) {
                           <div className="flex items-center gap-1.5">
                             <span className="material-symbols-outlined text-[16px]">person</span>
                             <span>
-                              Owner: <strong className="text-slate-700 dark:text-slate-200">{d.owner}</strong>
+                              {t.owner}: <strong className="text-slate-700 dark:text-slate-200">{d.owner}</strong>
                             </span>
                           </div>
                         )}
@@ -159,7 +153,7 @@ export default function SuccessState({ data, source }: SuccessStateProps) {
                           <div className="flex items-center gap-1.5">
                             <span className="material-symbols-outlined text-[16px]">calendar_today</span>
                             <span>
-                              Effective: <strong className="text-slate-700 dark:text-slate-200">{d.effectiveDate}</strong>
+                              {t.effective}: <strong className="text-slate-700 dark:text-slate-200">{d.effectiveDate}</strong>
                             </span>
                           </div>
                         )}
@@ -188,7 +182,7 @@ export default function SuccessState({ data, source }: SuccessStateProps) {
             <div className="space-y-4">
               <h3 className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider px-1">
                 <span className="material-symbols-outlined text-primary text-lg">checklist</span>
-                Next Steps
+                {t.nextSteps}
               </h3>
               <div className="bg-slate-50 dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 divide-y divide-slate-100 dark:divide-slate-700">
                 {data.actionItems.map((item, i) => (
@@ -212,7 +206,7 @@ export default function SuccessState({ data, source }: SuccessStateProps) {
                           <span
                             className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide shrink-0 ${priorityStyle[item.priority].bg} ${priorityStyle[item.priority].text}`}
                           >
-                            {priorityStyle[item.priority].label}
+                            {t.priority[item.priority]}
                           </span>
                         )}
                       </div>
@@ -249,7 +243,7 @@ export default function SuccessState({ data, source }: SuccessStateProps) {
                 <div className="bg-red-50 dark:bg-red-900/10 rounded-xl p-5 border border-red-100 dark:border-red-900/30">
                   <h3 className="flex items-center gap-2 text-sm font-bold text-red-800 dark:text-red-400 uppercase tracking-wider mb-3">
                     <span className="material-symbols-outlined text-lg">warning</span>
-                    Risks &amp; Blockers
+                    {t.risksAndBlockers}
                   </h3>
                   <ul className="space-y-2">
                     {data.risks.map((r, i) => (
@@ -267,7 +261,7 @@ export default function SuccessState({ data, source }: SuccessStateProps) {
                 <div className="bg-amber-50 dark:bg-amber-900/10 rounded-xl p-5 border border-amber-100 dark:border-amber-900/30">
                   <h3 className="flex items-center gap-2 text-sm font-bold text-amber-800 dark:text-amber-400 uppercase tracking-wider mb-3">
                     <span className="material-symbols-outlined text-lg">help</span>
-                    Open Questions
+                    {t.openQuestions}
                   </h3>
                   <ul className="space-y-2">
                     {data.openQuestions.map((q, i) => (
@@ -288,7 +282,7 @@ export default function SuccessState({ data, source }: SuccessStateProps) {
       <div className="p-3 border-t border-slate-100 dark:border-slate-800 flex justify-center">
         <div className="bg-slate-50 dark:bg-slate-800 rounded-full shadow-sm border border-slate-200 dark:border-slate-700 py-1.5 px-3 inline-flex items-center gap-2">
           <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 font-medium">
-            <span>Was this useful?</span>
+            <span>{t.wasThisUseful}</span>
             <div className="flex gap-1">
               <button className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded text-slate-400 hover:text-green-500 transition-colors">
                 <span className="material-symbols-outlined text-[20px]">thumb_up</span>
@@ -302,15 +296,15 @@ export default function SuccessState({ data, source }: SuccessStateProps) {
           <div className="flex gap-1">
             <button
               className="size-8 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 rounded-full transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-600"
-              title="Copy as text"
-              aria-label="Copy as text"
+              title={t.copyAsText}
+              aria-label={t.copyAsText}
             >
               <span className="material-symbols-outlined text-[16px]">content_copy</span>
             </button>
             <button
               className="size-8 flex items-center justify-center bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-full hover:opacity-90 transition-opacity shadow-md"
-              title="Copy as markdown"
-              aria-label="Copy as markdown"
+              title={t.copyAsMarkdown}
+              aria-label={t.copyAsMarkdown}
             >
               <span className="material-symbols-outlined text-[16px]">markdown</span>
             </button>

@@ -2,7 +2,7 @@
 
 Meeting Note Cleaner is a Next.js 14 App Router project for transforming raw meeting transcripts into structured notes.
 
-This repository currently includes **Steps 1–6** of the implementation plan.
+This repository currently includes **Steps 1–7** of the implementation plan.
 
 ## Step 1 Scope (Implemented)
 
@@ -68,6 +68,14 @@ This repository currently includes **Steps 1–6** of the implementation plan.
 - **Source visibility** — successful responses include `source: "claude" | "mock"`, rendered in the success header badge
 - **Auto language preview** — while `Auto` is selected, the UI previews detected language (`English` / `French`) before generation when confidence is clear
 
+## Step 7 Scope (Implemented)
+
+- **French mock data** — full French translation of mock meeting notes (`MOCK_MEETING_NOTES_FR`) so `force_fr` returns French content even without Claude
+- **Language-aware mock selection** — `buildValidatedMockResponse` picks `MOCK_MEETING_NOTES` or `MOCK_MEETING_NOTES_FR` based on resolved language
+- **Bilingual UI labels** — `src/lib/i18n.ts` provides a complete label map (section headings, status badges, priority tags, confidence, footer text) in English and French
+- **SuccessState translation** — all static strings in the success panel are driven by `data.language`, so French output gets French UI chrome
+- **Claude prompt unchanged** — the system prompt already instructs Claude to output in the requested language; no prompt changes were needed
+
 ## Implementation Status
 
 | Step   | Description                                                   | Status     |
@@ -78,12 +86,11 @@ This repository currently includes **Steps 1–6** of the implementation plan.
 | Step 4 | Real language detection behavior                              | ✅ Done    |
 | Step 5 | Zod validation + retry once plumbing                          | ✅ Done    |
 | Step 6 | Claude integration + strict JSON prompts                      | ✅ Done    |
-| Step 7 | Translation rules for `force_en` / `force_fr`                 | ⏳ Pending |
+| Step 7 | Translation rules for `force_en` / `force_fr`                 | ✅ Done    |
 | Step 8 | P1 features: copy, feedback, instrumentation                  | ⏳ Pending |
 
 ## Not Implemented Yet (Planned in Next Steps)
 
-- Translation rules for `force_en` / `force_fr`
 - P1 extras (copy actions, feedback events, instrumentation wiring)
 
 ## Tech Stack
@@ -138,6 +145,7 @@ npx playwright test tests/e2e/step5-retry.spec.ts
 - `src/components/stitch/SuccessState.tsx` — Step 2 data-driven processed-notes renderer
 - `src/data/mock-meeting-notes.ts` — Step 2 mock output payload
 - `src/types/meeting-notes.ts` — Step 2 processed-notes schema
+- `src/lib/i18n.ts` — Step 7 bilingual label map (EN/FR) for SuccessState UI strings
 - `src/types/api.ts` — includes `GenerateResponse` source metadata (`claude` / `mock`)
 - `src/schemas/meeting-notes.ts` — Step 5 Zod validation schemas for MeetingNotesResult
 - `tests/e2e/step5-retry.spec.ts` — Step 5 deterministic E2E coverage for retry-once behavior
@@ -150,4 +158,4 @@ npx playwright test tests/e2e/step5-retry.spec.ts
 - Root route (`/`) redirects to `/meeting-note-cleaner`.
 - With `ANTHROPIC_API_KEY` set, Claude generates real structured notes. Without it, mock data is returned.
 - Success header displays `Source: Claude` or `Source: Mock` for each run.
-- Success content remains English-only until translation rules are implemented (Step 7).
+- Success content and UI labels are fully bilingual (English/French) as of Step 7.
