@@ -11,13 +11,23 @@ export type DetectedLanguage = "en" | "fr" | "mixed";
 
 export interface DetectResponse {
   language: DetectedLanguage;
+  /** 0-1 confidence in the detection result */
+  confidence: number;
+  /** Percentage of recognised French tokens (0-1) */
+  frRatio: number;
+  /** Percentage of recognised English tokens (0-1) */
+  enRatio: number;
 }
 
 // ── /api/generate ─────────────────────────────────────────────────────────────
 
 export interface GenerateRequest {
   transcript: string;
-  /** "auto" is resolved before calling generate — pass the concrete lang if auto detected mixed */
+  /**
+   * The output mode chosen by the user or resolved by detect.
+   * Should be "force_en" or "force_fr" when auto-detect has resolved.
+   * If "auto" is sent, generate will default to English.
+   */
   outputMode: OutputMode;
 }
 

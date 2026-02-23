@@ -2,7 +2,7 @@
 
 Meeting Note Cleaner is a Next.js 14 App Router project for transforming raw meeting transcripts into structured notes.
 
-This repository currently includes **Steps 1–3** of the implementation plan.
+This repository currently includes **Steps 1–4** of the implementation plan.
 
 ## Step 1 Scope (Implemented)
 
@@ -41,6 +41,14 @@ This repository currently includes **Steps 1–3** of the implementation plan.
 - Page wired to real `fetch` calls — LOADING → detect → (MIXED_PICKER or generate) → SUCCESS/error states
 - Full error state routing: `refusal` → MODEL_REFUSAL, `validation_error` → VALIDATION_ERROR, network failures → VALIDATION_ERROR
 
+## Step 4 Scope (Implemented)
+
+- **Robust language detection heuristic** — expanded word lists (100+ French, 90+ English), common bigrams, accent-character weighting
+- **Confidence scoring** — `/api/detect` now returns `confidence`, `frRatio`, and `enRatio` alongside the detected language
+- **Fixed auto→resolved language flow** — when detect returns `en` or `fr`, the resolved language (`force_en`/`force_fr`) is passed to `/api/generate` instead of `"auto"`
+- **Generate fallback** — if `"auto"` still reaches `/api/generate`, it defaults to English
+- **Edge-case handling** — empty/short transcripts reduce confidence; unknown scripts default to English
+
 ## Implementation Status
 
 | Step   | Description                                                   | Status     |
@@ -48,7 +56,7 @@ This repository currently includes **Steps 1–3** of the implementation plan.
 | Step 1 | Import Stitch UI + route + 7-state machine (no backend calls) | ✅ Done    |
 | Step 2 | Types + success rendering from mock JSON                      | ✅ Done    |
 | Step 3 | API wiring with stub responses                                | ✅ Done    |
-| Step 4 | Real language detection behavior                              | ⏳ Pending |
+| Step 4 | Real language detection behavior                              | ✅ Done    |
 | Step 5 | Zod validation + retry once plumbing                          | ⏳ Pending |
 | Step 6 | Claude integration + strict JSON prompts                      | ⏳ Pending |
 | Step 7 | Translation rules for `force_en` / `force_fr`                 | ⏳ Pending |
@@ -56,8 +64,6 @@ This repository currently includes **Steps 1–3** of the implementation plan.
 
 ## Not Implemented Yet (Planned in Next Steps)
 
-- Real API routes and backend flow (`/api/detect`, `/api/generate`)
-- Language detection logic (`en | fr | mixed`)
 - Zod schema validation + retry-on-invalid-JSON
 - Claude integration
 - Translation rules for `force_en` / `force_fr`
@@ -102,3 +108,4 @@ npm run build
 
 - No auth and no database persistence are implemented yet.
 - Root route (`/`) redirects to `/meeting-note-cleaner`.
+- Success content is mock data and remains English-only until translation rules are implemented.

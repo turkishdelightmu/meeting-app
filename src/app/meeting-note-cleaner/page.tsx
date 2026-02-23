@@ -104,6 +104,8 @@ export default function MeetingNoteCleanerPage() {
 
     try {
       // Step 1: detect language (only matters when outputMode === "auto")
+      let resolvedMode: OutputMode = outputModeRef.current;
+
       if (outputModeRef.current === "auto") {
         const detectRes = await fetch("/api/detect", {
           method: "POST",
@@ -117,12 +119,14 @@ export default function MeetingNoteCleanerPage() {
             setUiState(UIState.MIXED_PICKER);
             return;
           }
+          // Resolve auto → concrete language for the generate call
+          resolvedMode = language === "fr" ? "force_fr" : "force_en";
         }
-        // If detect fails or returns a single language, fall through to generate
+        // If detect fails, default resolvedMode stays "auto" → generate will default to English
       }
 
-      // Step 2: generate notes
-      await callGenerate(transcriptRef.current, outputModeRef.current);
+      // Step 2: generate notes with the resolved language
+      await callGenerate(transcriptRef.current, resolvedMode);
     } catch (err) {
       setValidationRaw(err instanceof Error ? err.message : String(err));
       setUiState(UIState.VALIDATION_ERROR);

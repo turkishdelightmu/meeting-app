@@ -18,11 +18,15 @@ export async function POST(req: Request) {
     // Simulate a short processing delay (removed in production)
     await new Promise((resolve) => setTimeout(resolve, 600));
 
+    // Resolve the output language.
+    // "auto" should be resolved upstream by detect, but default to English as fallback.
+    const language: "en" | "fr" =
+      body.outputMode === "force_fr" ? "fr" : "en";
+
     // Return mock result that matches the MeetingNotesResult schema.
-    // outputMode drives which language is used in the response.
     const result = {
       ...MOCK_MEETING_NOTES,
-      language: body.outputMode === "force_fr" ? ("fr" as const) : ("en" as const),
+      language,
     };
 
     const response: GenerateResponse = { ok: true, result };
