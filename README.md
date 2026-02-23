@@ -1,36 +1,81 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Meeting Note Cleaner (MVP)
 
-## Getting Started
+Meeting Note Cleaner is a Next.js 14 App Router project for transforming raw meeting transcripts into structured notes.
 
-First, run the development server:
+This repository currently includes **Step 1** of the implementation plan.
+
+## Step 1 Scope (Implemented)
+
+- Single-page UI route at `/meeting-note-cleaner`
+- Stitch-based UI integrated into reusable components
+- 7-state UI state machine:
+	- `EMPTY`
+	- `TOO_LONG`
+	- `MIXED_PICKER`
+	- `LOADING`
+	- `SUCCESS`
+	- `VALIDATION_ERROR`
+	- `MODEL_REFUSAL`
+- Transcript input panel with:
+	- textarea
+	- character counter
+	- output mode selector (`auto`, `force_en`, `force_fr`)
+	- Generate button gating (`< 50` disabled, `> 20,000` disabled)
+- Automatic `TOO_LONG` behavior when transcript exceeds 20,000 characters
+- DEV state switcher for quickly previewing each UI state
+
+## Implementation Status
+
+| Step | Description | Status |
+|---|---|---|
+| Step 1 | Import Stitch UI + route + 7-state machine (no backend calls) | ✅ Done |
+| Step 2 | Types + success rendering from mock JSON | ⏳ Pending |
+| Step 3 | API wiring with stub responses | ⏳ Pending |
+| Step 4 | Real language detection behavior | ⏳ Pending |
+| Step 5 | Zod validation + retry once plumbing | ⏳ Pending |
+| Step 6 | Claude integration + strict JSON prompts | ⏳ Pending |
+| Step 7 | Translation rules for `force_en` / `force_fr` | ⏳ Pending |
+| Step 8 | P1 features: copy, feedback, instrumentation | ⏳ Pending |
+
+## Not Implemented Yet (Planned in Next Steps)
+
+- Real API routes and backend flow (`/api/detect`, `/api/generate`)
+- Language detection logic (`en | fr | mixed`)
+- Zod schema validation + retry-on-invalid-JSON
+- Claude integration
+- Translation rules for `force_en` / `force_fr`
+- P1 extras (copy actions, feedback events, instrumentation wiring)
+
+## Tech Stack
+
+- Next.js 14 (App Router)
+- TypeScript
+- Tailwind CSS
+
+## Run Locally
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- `http://localhost:3000/meeting-note-cleaner`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Production check:
 
-## Learn More
+```bash
+npm run build
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Project Structure (Key Files)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `src/app/meeting-note-cleaner/page.tsx` — main Step 1 page and UI state machine
+- `src/components/stitch/` — Stitch-derived UI components and state views
+- `src/types/ui-states.ts` — state enum, output mode type, char limits
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Notes
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- No auth and no database persistence are implemented in Step 1.
+- Root route (`/`) redirects to `/meeting-note-cleaner`.
