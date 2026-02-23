@@ -2,6 +2,8 @@
 
 import { useState, useCallback } from "react";
 import { UIState, OutputMode, MAX_CHARS } from "@/types/ui-states";
+import type { MeetingNotesResult } from "@/types/meeting-notes";
+import { MOCK_MEETING_NOTES } from "@/data/mock-meeting-notes";
 import Header from "@/components/stitch/Header";
 import InputPanel from "@/components/stitch/InputPanel";
 import EmptyState from "@/components/stitch/EmptyState";
@@ -17,6 +19,7 @@ export default function MeetingNoteCleanerPage() {
   const [transcript, setTranscript] = useState("");
   const [outputMode, setOutputMode] = useState<OutputMode>("auto");
   const [uiState, setUiState] = useState<UIState>(UIState.EMPTY);
+  const [notesResult, setNotesResult] = useState<MeetingNotesResult | null>(null);
 
   // Derive TOO_LONG automatically from transcript length
   const effectiveState =
@@ -42,6 +45,7 @@ export default function MeetingNoteCleanerPage() {
   const handleClear = useCallback(() => {
     setTranscript("");
     setOutputMode("auto");
+    setNotesResult(null);
     setUiState(UIState.EMPTY);
   }, []);
 
@@ -50,6 +54,7 @@ export default function MeetingNoteCleanerPage() {
     // For now just transition to LOADING briefly then SUCCESS
     setUiState(UIState.LOADING);
     setTimeout(() => {
+      setNotesResult(MOCK_MEETING_NOTES);
       setUiState(UIState.SUCCESS);
     }, 2000);
   }, []);
@@ -60,6 +65,7 @@ export default function MeetingNoteCleanerPage() {
       // Will trigger generate in Step 3
       setUiState(UIState.LOADING);
       setTimeout(() => {
+        setNotesResult(MOCK_MEETING_NOTES);
         setUiState(UIState.SUCCESS);
       }, 2000);
     },
@@ -69,14 +75,19 @@ export default function MeetingNoteCleanerPage() {
   const handleRetry = useCallback(() => {
     setUiState(UIState.LOADING);
     setTimeout(() => {
+      setNotesResult(MOCK_MEETING_NOTES);
       setUiState(UIState.SUCCESS);
     }, 2000);
   }, []);
 
   // DEV toggle to manually switch states
   const handleDevStateChange = useCallback((state: UIState) => {
+    // Ensure mock data exists when jumping straight to SUCCESS
+    if (state === UIState.SUCCESS && !notesResult) {
+      setNotesResult(MOCK_MEETING_NOTES);
+    }
     setUiState(state);
-  }, []);
+  }, [notesResult]);
 
   const renderOutputPanel = () => {
     switch (effectiveState) {
@@ -91,7 +102,7 @@ export default function MeetingNoteCleanerPage() {
       case UIState.LOADING:
         return <LoadingState />;
       case UIState.SUCCESS:
-        return <SuccessState />;
+        return notesResult ? <SuccessState data={notesResult} /> : <EmptyState />;
       case UIState.VALIDATION_ERROR:
         return (
           <ValidationErrorState
