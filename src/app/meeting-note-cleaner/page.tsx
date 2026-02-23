@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
-import { UIState, OutputMode, MAX_CHARS } from "@/types/ui-states";
+import { useState, useCallback, useRef, useEffect } from "react";
+import { UIState, OutputMode, MAX_CHARS, MIN_CHARS } from "@/types/ui-states";
 import type { MeetingNotesResult } from "@/types/meeting-notes";
-import type { DetectResponse, GenerateResponse } from "@/types/api";
+import type { DetectResponse, GenerateResponse, GenerateSource } from "@/types/api";
 import { MOCK_MEETING_NOTES } from "@/data/mock-meeting-notes";
 import Header from "@/components/stitch/Header";
 import InputPanel from "@/components/stitch/InputPanel";
@@ -21,13 +21,75 @@ export default function MeetingNoteCleanerPage() {
   const [outputMode, setOutputMode] = useState<OutputMode>("auto");
   const [uiState, setUiState] = useState<UIState>(UIState.EMPTY);
   const [notesResult, setNotesResult] = useState<MeetingNotesResult | null>(null);
+  const [resultSource, setResultSource] = useState<GenerateSource | null>(null);
   const [validationRaw, setValidationRaw] = useState<string>("");
+  const [autoPreviewMode, setAutoPreviewMode] = useState<OutputMode | null>(null);
+
+  const resolvedOutputModeForUI: OutputMode =
+    outputMode === "auto" && notesResult
+      ? notesResult.language === "fr"
+        ? "force_fr"
+        : "force_en"
+      : outputMode === "auto" && autoPreviewMode
+      ? autoPreviewMode
+      : outputMode;
 
   // Keep a stable ref to current transcript + outputMode for retry
   const transcriptRef = useRef(transcript);
   const outputModeRef = useRef(outputMode);
   transcriptRef.current = transcript;
-  outputModeRef.current = outputMode;
+  outputModeRef.current = resolvedOutputModeForUI;
+
+  useEffect(() => {
+    if (!notesResult || outputMode !== "auto") {
+      return;
+    }
+
+    const resolvedFromResult: OutputMode =
+      notesResult.language === "fr" ? "force_fr" : "force_en";
+    setOutputMode(resolvedFromResult);
+  }, [notesResult, outputMode]);
+
+  useEffect(() => {
+    if (outputMode !== "auto") {
+      setAutoPreviewMode(null);
+      return;
+    }
+
+    const trimmed = transcript.trim();
+    if (trimmed.length < MIN_CHARS || trimmed.length > MAX_CHARS) {
+      setAutoPreviewMode(null);
+      return;
+    }
+
+    const timeoutId = setTimeout(async () => {
+      try {
+        const detectRes = await fetch("/api/detect", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ transcript: trimmed }),
+        });
+
+        if (!detectRes.ok) {
+          setAutoPreviewMode(null);
+          return;
+        }
+
+        const { language }: DetectResponse = await detectRes.json();
+        if (language === "fr") {
+          setAutoPreviewMode("force_fr");
+        } else if (language === "en") {
+          setAutoPreviewMode("force_en");
+        } else {
+          setAutoPreviewMode(null);
+        }
+      } catch {
+        setAutoPreviewMode(null);
+      }
+    }, 350);
+
+    return () => clearTimeout(timeoutId);
+  }, [outputMode, transcript]);
 
   // Derive TOO_LONG automatically from transcript length
   const effectiveState =
@@ -52,7 +114,9 @@ export default function MeetingNoteCleanerPage() {
   const handleClear = useCallback(() => {
     setTranscript("");
     setOutputMode("auto");
+    setAutoPreviewMode(null);
     setNotesResult(null);
+    setResultSource(null);
     setValidationRaw("");
     setUiState(UIState.EMPTY);
   }, []);
@@ -79,6 +143,10 @@ export default function MeetingNoteCleanerPage() {
 
         if (data.ok) {
           setNotesResult(data.result);
+          setResultSource(data.source);
+          const effectiveMode: OutputMode =
+            mode === "force_fr" ? "force_fr" : "force_en";
+          setOutputMode(effectiveMode);
           setUiState(UIState.SUCCESS);
         } else if (data.reason === "refusal") {
           setUiState(UIState.MODEL_REFUSAL);
@@ -92,8 +160,11 @@ export default function MeetingNoteCleanerPage() {
             setValidationRaw(data.rawOutput);
             setUiState(UIState.VALIDATION_ERROR);
           }
+        } else if (data.reason === "server_error") {
+          setValidationRaw(data.message);
+          setUiState(UIState.VALIDATION_ERROR);
         } else {
-          setValidationRaw("server_error");
+          setValidationRaw("Unexpected error response from server");
           setUiState(UIState.VALIDATION_ERROR);
         }
       } catch (err) {
@@ -128,6 +199,11 @@ export default function MeetingNoteCleanerPage() {
           }
           // Resolve auto → concrete language for the generate call
           resolvedMode = language === "fr" ? "force_fr" : "force_en";
+          setOutputMode(resolvedMode);
+        } else {
+          // Detect failed: use English fallback and reflect it in UI
+          resolvedMode = "force_en";
+          setOutputMode("force_en");
         }
         // If detect fails, default resolvedMode stays "auto" → generate will default to English
       }
@@ -158,6 +234,7 @@ export default function MeetingNoteCleanerPage() {
   const handleDevStateChange = useCallback((state: UIState) => {
     if (state === UIState.SUCCESS && !notesResult) {
       setNotesResult(MOCK_MEETING_NOTES);
+      setResultSource("mock");
     }
     setUiState(state);
   }, [notesResult]);
@@ -175,7 +252,11 @@ export default function MeetingNoteCleanerPage() {
       case UIState.LOADING:
         return <LoadingState />;
       case UIState.SUCCESS:
-        return notesResult ? <SuccessState data={notesResult} /> : <EmptyState />;
+        return notesResult ? (
+          <SuccessState data={notesResult} source={resultSource ?? "mock"} />
+        ) : (
+          <EmptyState />
+        );
       case UIState.VALIDATION_ERROR:
         return (
           <ValidationErrorState
@@ -202,7 +283,7 @@ export default function MeetingNoteCleanerPage() {
           <InputPanel
             transcript={transcript}
             onTranscriptChange={handleTranscriptChange}
-            outputMode={outputMode}
+            outputMode={resolvedOutputModeForUI}
             onOutputModeChange={setOutputMode}
             onGenerate={handleGenerate}
             onClear={handleClear}

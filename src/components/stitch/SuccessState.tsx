@@ -64,9 +64,10 @@ function avatarColor(initial: string) {
 
 interface SuccessStateProps {
   data: MeetingNotesResult;
+  source: "claude" | "mock";
 }
 
-export default function SuccessState({ data }: SuccessStateProps) {
+export default function SuccessState({ data, source }: SuccessStateProps) {
   return (
     <section className="flex flex-col bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden">
       {/* ── Header ─────────────────────────────────────────────── */}
@@ -79,10 +80,15 @@ export default function SuccessState({ data }: SuccessStateProps) {
             Processed Notes
           </h2>
         </div>
-        <span className="text-xs font-medium text-slate-500 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-1 rounded-full shadow-sm flex items-center gap-1">
-          <span className={`w-1.5 h-1.5 rounded-full ${confidenceColor[data.confidence]}`} />
-          AI Confidence: {confidenceLabel[data.confidence]}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-slate-500 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-1 rounded-full shadow-sm">
+            Source: {source === "claude" ? "Claude" : "Mock"}
+          </span>
+          <span className="text-xs font-medium text-slate-500 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-1 rounded-full shadow-sm flex items-center gap-1">
+            <span className={`w-1.5 h-1.5 rounded-full ${confidenceColor[data.confidence]}`} />
+            AI Confidence: {confidenceLabel[data.confidence]}
+          </span>
+        </div>
       </div>
 
       {/* ── Scrollable body ────────────────────────────────────── */}

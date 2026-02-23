@@ -21,6 +21,8 @@ export interface DetectResponse {
 
 // ── /api/generate ─────────────────────────────────────────────────────────────
 
+export type GenerateSource = "claude" | "mock";
+
 export interface GenerateRequest {
   transcript: string;
   /**
@@ -35,6 +37,7 @@ export interface GenerateRequest {
 export interface GenerateSuccessResponse {
   ok: true;
   result: MeetingNotesResult;
+  source: GenerateSource;
 }
 
 /** Model refused to process the content */
