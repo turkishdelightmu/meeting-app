@@ -2,7 +2,7 @@
 
 Meeting Note Cleaner is a Next.js 14 App Router project for transforming raw meeting transcripts into structured notes.
 
-This repository currently includes **Step 1 and Step 2** of the implementation plan.
+This repository currently includes **Steps 1–3** of the implementation plan.
 
 ## Step 1 Scope (Implemented)
 
@@ -33,13 +33,21 @@ This repository currently includes **Step 1 and Step 2** of the implementation p
 - Confidence badge + action-item priority badges
 - Risks and open-questions sections bound to data
 
+## Step 3 Scope (Implemented)
+
+- `POST /api/detect` stub — frequency-based language heuristic returning `en | fr | mixed`
+- `POST /api/generate` stub — returns mock `MeetingNotesResult` JSON (replaces `setTimeout`)
+- Typed API request/response contracts in `src/types/api.ts`
+- Page wired to real `fetch` calls — LOADING → detect → (MIXED_PICKER or generate) → SUCCESS/error states
+- Full error state routing: `refusal` → MODEL_REFUSAL, `validation_error` → VALIDATION_ERROR, network failures → VALIDATION_ERROR
+
 ## Implementation Status
 
 | Step   | Description                                                   | Status     |
 | ------ | ------------------------------------------------------------- | ---------- |
 | Step 1 | Import Stitch UI + route + 7-state machine (no backend calls) | ✅ Done    |
 | Step 2 | Types + success rendering from mock JSON                      | ✅ Done    |
-| Step 3 | API wiring with stub responses                                | ⏳ Pending |
+| Step 3 | API wiring with stub responses                                | ✅ Done    |
 | Step 4 | Real language detection behavior                              | ⏳ Pending |
 | Step 5 | Zod validation + retry once plumbing                          | ⏳ Pending |
 | Step 6 | Claude integration + strict JSON prompts                      | ⏳ Pending |
@@ -80,6 +88,9 @@ npm run build
 
 ## Project Structure (Key Files)
 
+- `src/app/api/detect/route.ts` — Step 3 language-detection stub API
+- `src/app/api/generate/route.ts` — Step 3 note-generation stub API
+- `src/types/api.ts` — Step 3 typed request/response contracts
 - `src/app/meeting-note-cleaner/page.tsx` — main page, UI state machine, and Step 2 mock-data wiring
 - `src/components/stitch/` — Stitch-derived UI components and state views
 - `src/components/stitch/SuccessState.tsx` — Step 2 data-driven processed-notes renderer

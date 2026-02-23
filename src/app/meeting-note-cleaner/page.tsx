@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { UIState, OutputMode, MAX_CHARS } from "@/types/ui-states";
 import type { MeetingNotesResult } from "@/types/meeting-notes";
+import type { DetectResponse, GenerateResponse } from "@/types/api";
 import { MOCK_MEETING_NOTES } from "@/data/mock-meeting-notes";
 import Header from "@/components/stitch/Header";
 import InputPanel from "@/components/stitch/InputPanel";
@@ -20,6 +21,13 @@ export default function MeetingNoteCleanerPage() {
   const [outputMode, setOutputMode] = useState<OutputMode>("auto");
   const [uiState, setUiState] = useState<UIState>(UIState.EMPTY);
   const [notesResult, setNotesResult] = useState<MeetingNotesResult | null>(null);
+  const [validationRaw, setValidationRaw] = useState<string>("");
+
+  // Keep a stable ref to current transcript + outputMode for retry
+  const transcriptRef = useRef(transcript);
+  const outputModeRef = useRef(outputMode);
+  transcriptRef.current = transcript;
+  outputModeRef.current = outputMode;
 
   // Derive TOO_LONG automatically from transcript length
   const effectiveState =
@@ -30,7 +38,6 @@ export default function MeetingNoteCleanerPage() {
   const handleTranscriptChange = useCallback(
     (value: string) => {
       setTranscript(value);
-      // Auto-transition states based on content
       if (value.length > MAX_CHARS) {
         setUiState(UIState.TOO_LONG);
       } else if (value.length === 0 && uiState === UIState.TOO_LONG) {
@@ -46,43 +53,98 @@ export default function MeetingNoteCleanerPage() {
     setTranscript("");
     setOutputMode("auto");
     setNotesResult(null);
+    setValidationRaw("");
     setUiState(UIState.EMPTY);
   }, []);
 
-  const handleGenerate = useCallback(() => {
-    // Placeholder: will be wired in Step 3
-    // For now just transition to LOADING briefly then SUCCESS
-    setUiState(UIState.LOADING);
-    setTimeout(() => {
-      setNotesResult(MOCK_MEETING_NOTES);
-      setUiState(UIState.SUCCESS);
-    }, 2000);
-  }, []);
+  // ── Core API helpers ────────────────────────────────────────────────────────
 
-  const handleMixedLanguageSelect = useCallback(
-    (lang: "force_en" | "force_fr") => {
-      setOutputMode(lang);
-      // Will trigger generate in Step 3
-      setUiState(UIState.LOADING);
-      setTimeout(() => {
-        setNotesResult(MOCK_MEETING_NOTES);
-        setUiState(UIState.SUCCESS);
-      }, 2000);
+  /** Call /api/generate and transition to the appropriate state */
+  const callGenerate = useCallback(
+    async (text: string, mode: OutputMode) => {
+      try {
+        const res = await fetch("/api/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ transcript: text, outputMode: mode }),
+        });
+
+        if (!res.ok) {
+          setUiState(UIState.VALIDATION_ERROR);
+          setValidationRaw(`HTTP ${res.status}: ${res.statusText}`);
+          return;
+        }
+
+        const data: GenerateResponse = await res.json();
+
+        if (data.ok) {
+          setNotesResult(data.result);
+          setUiState(UIState.SUCCESS);
+        } else if (data.reason === "refusal") {
+          setUiState(UIState.MODEL_REFUSAL);
+        } else if (data.reason === "validation_error") {
+          setValidationRaw(data.rawOutput);
+          setUiState(UIState.VALIDATION_ERROR);
+        } else {
+          setValidationRaw("server_error");
+          setUiState(UIState.VALIDATION_ERROR);
+        }
+      } catch (err) {
+        setValidationRaw(err instanceof Error ? err.message : String(err));
+        setUiState(UIState.VALIDATION_ERROR);
+      }
     },
     []
   );
 
-  const handleRetry = useCallback(() => {
+  // ── User action handlers ────────────────────────────────────────────────────
+
+  const handleGenerate = useCallback(async () => {
     setUiState(UIState.LOADING);
-    setTimeout(() => {
-      setNotesResult(MOCK_MEETING_NOTES);
-      setUiState(UIState.SUCCESS);
-    }, 2000);
-  }, []);
+
+    try {
+      // Step 1: detect language (only matters when outputMode === "auto")
+      if (outputModeRef.current === "auto") {
+        const detectRes = await fetch("/api/detect", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ transcript: transcriptRef.current }),
+        });
+
+        if (detectRes.ok) {
+          const { language }: DetectResponse = await detectRes.json();
+          if (language === "mixed") {
+            setUiState(UIState.MIXED_PICKER);
+            return;
+          }
+        }
+        // If detect fails or returns a single language, fall through to generate
+      }
+
+      // Step 2: generate notes
+      await callGenerate(transcriptRef.current, outputModeRef.current);
+    } catch (err) {
+      setValidationRaw(err instanceof Error ? err.message : String(err));
+      setUiState(UIState.VALIDATION_ERROR);
+    }
+  }, [callGenerate]);
+
+  const handleMixedLanguageSelect = useCallback(
+    async (lang: "force_en" | "force_fr") => {
+      setOutputMode(lang);
+      setUiState(UIState.LOADING);
+      await callGenerate(transcriptRef.current, lang);
+    },
+    [callGenerate]
+  );
+
+  const handleRetry = useCallback(async () => {
+    setUiState(UIState.LOADING);
+    await callGenerate(transcriptRef.current, outputModeRef.current);
+  }, [callGenerate]);
 
   // DEV toggle to manually switch states
   const handleDevStateChange = useCallback((state: UIState) => {
-    // Ensure mock data exists when jumping straight to SUCCESS
     if (state === UIState.SUCCESS && !notesResult) {
       setNotesResult(MOCK_MEETING_NOTES);
     }
@@ -107,7 +169,7 @@ export default function MeetingNoteCleanerPage() {
         return (
           <ValidationErrorState
             onRetry={handleRetry}
-            rawOutput='{"malformed": true, "missing_fields": ...}'
+            rawOutput={validationRaw || '{"malformed": true}'}
           />
         );
       case UIState.MODEL_REFUSAL:
