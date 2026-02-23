@@ -59,9 +59,9 @@ export default function MeetingNoteCleanerPage() {
 
   // ── Core API helpers ────────────────────────────────────────────────────────
 
-  /** Call /api/generate and transition to the appropriate state */
+  /** Call /api/generate with automatic retry-once on validation errors (Step 5) */
   const callGenerate = useCallback(
-    async (text: string, mode: OutputMode) => {
+    async (text: string, mode: OutputMode, { isRetry = false } = {}) => {
       try {
         const res = await fetch("/api/generate", {
           method: "POST",
@@ -83,8 +83,15 @@ export default function MeetingNoteCleanerPage() {
         } else if (data.reason === "refusal") {
           setUiState(UIState.MODEL_REFUSAL);
         } else if (data.reason === "validation_error") {
-          setValidationRaw(data.rawOutput);
-          setUiState(UIState.VALIDATION_ERROR);
+          // ── Retry-once plumbing (Step 5) ──────────────────────────────
+          if (!isRetry) {
+            // First failure → retry automatically one more time
+            await callGenerate(text, mode, { isRetry: true });
+          } else {
+            // Second failure → surface the error to the user
+            setValidationRaw(data.rawOutput);
+            setUiState(UIState.VALIDATION_ERROR);
+          }
         } else {
           setValidationRaw("server_error");
           setUiState(UIState.VALIDATION_ERROR);

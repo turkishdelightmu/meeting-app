@@ -2,7 +2,7 @@
 
 Meeting Note Cleaner is a Next.js 14 App Router project for transforming raw meeting transcripts into structured notes.
 
-This repository currently includes **Steps 1–4** of the implementation plan.
+This repository currently includes **Steps 1–5** of the implementation plan.
 
 ## Step 1 Scope (Implemented)
 
@@ -49,6 +49,13 @@ This repository currently includes **Steps 1–4** of the implementation plan.
 - **Generate fallback** — if `"auto"` still reaches `/api/generate`, it defaults to English
 - **Edge-case handling** — empty/short transcripts reduce confidence; unknown scripts default to English
 
+## Step 5 Scope (Implemented)
+
+- **Zod schemas** — full Zod schema in `src/schemas/meeting-notes.ts` mirroring the TypeScript types, validating every field of `MeetingNotesResult`
+- **Server-side validation** — `/api/generate` runs `safeParse` on the result through `MeetingNotesResultSchema` before responding; returns `validation_error` with `rawOutput` on failure
+- **Client-side retry-once** — `callGenerate` on the page automatically retries one more time when the first response is a `validation_error`; only surfaces the error to the user after the second failure
+- **Manual retry preserved** — the "Try Again" button in `ValidationErrorState` still works for user-initiated retries after the automatic retry has been exhausted
+
 ## Implementation Status
 
 | Step   | Description                                                   | Status     |
@@ -57,14 +64,13 @@ This repository currently includes **Steps 1–4** of the implementation plan.
 | Step 2 | Types + success rendering from mock JSON                      | ✅ Done    |
 | Step 3 | API wiring with stub responses                                | ✅ Done    |
 | Step 4 | Real language detection behavior                              | ✅ Done    |
-| Step 5 | Zod validation + retry once plumbing                          | ⏳ Pending |
+| Step 5 | Zod validation + retry once plumbing                          | ✅ Done    |
 | Step 6 | Claude integration + strict JSON prompts                      | ⏳ Pending |
 | Step 7 | Translation rules for `force_en` / `force_fr`                 | ⏳ Pending |
 | Step 8 | P1 features: copy, feedback, instrumentation                  | ⏳ Pending |
 
 ## Not Implemented Yet (Planned in Next Steps)
 
-- Zod schema validation + retry-on-invalid-JSON
 - Claude integration
 - Translation rules for `force_en` / `force_fr`
 - P1 extras (copy actions, feedback events, instrumentation wiring)
@@ -92,6 +98,18 @@ Production check:
 npm run build
 ```
 
+Step 5 E2E checks:
+
+```bash
+npm run test:e2e
+```
+
+Run only Step 5 retry tests:
+
+```bash
+npx playwright test tests/e2e/step5-retry.spec.ts
+```
+
 ## Project Structure (Key Files)
 
 - `src/app/api/detect/route.ts` — Step 3 language-detection stub API
@@ -102,6 +120,9 @@ npm run build
 - `src/components/stitch/SuccessState.tsx` — Step 2 data-driven processed-notes renderer
 - `src/data/mock-meeting-notes.ts` — Step 2 mock output payload
 - `src/types/meeting-notes.ts` — Step 2 processed-notes schema
+- `src/schemas/meeting-notes.ts` — Step 5 Zod validation schemas for MeetingNotesResult
+- `tests/e2e/step5-retry.spec.ts` — Step 5 deterministic E2E coverage for retry-once behavior
+- `playwright.config.ts` — Playwright runner config for local E2E tests
 - `src/types/ui-states.ts` — state enum, output mode type, char limits
 
 ## Notes
