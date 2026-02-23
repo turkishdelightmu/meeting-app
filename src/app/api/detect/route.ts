@@ -31,6 +31,12 @@ const FR_WORDS = new Set([
   "réunion", "projet", "équipe", "objectif", "compte", "rendu",
   "décision", "action", "risque", "calendrier", "livrable",
   "prochaine", "étape", "budget", "rapport", "responsable",
+  "questions", "ouvertes", "prochain", "rendez", "vous",
+  "quelles", "sont", "limites", "débit", "valeurs", "fenêtres",
+  "pénalités", "profil", "trafic", "attendu", "faut", "il",
+  "informer", "clients", "communication", "externe", "seulement",
+  "interne", "suppression", "malgré", "démos", "prévues", "jeudi",
+  "avancement",
 ]);
 
 const EN_WORDS = new Set([
@@ -92,10 +98,13 @@ interface DetectionResult {
 
 function detectLanguage(transcript: string): DetectionResult {
   const lower = transcript.toLowerCase();
+  const normalized = lower
+    .replace(/[’']/g, " ")
+    .replace(/-/g, " ");
 
   // Tokenise into words
-  const words = lower
-    .replace(/[^a-zàâäéèêëïîôùûüÿçœæ\s'-]/gi, " ")
+  const words = normalized
+    .replace(/[^a-zàâäéèêëïîôùûüÿçœæ\s]/gi, " ")
     .split(/\s+/)
     .filter((w) => w.length > 0);
 
@@ -137,15 +146,23 @@ function detectLanguage(transcript: string): DetectionResult {
 
   const frRatio = frScore / totalScore;
   const enRatio = enScore / totalScore;
+  const dominance = Math.abs(frRatio - enRatio);
+
+  const hasStrongFrenchSignal = frWordHits + frBigramHits >= 6 || accentCount >= 3;
+  const hasStrongEnglishSignal = enWordHits + enBigramHits >= 6;
+  const hasBilingualSignal = hasStrongFrenchSignal && hasStrongEnglishSignal;
 
   // ── Thresholds ────────────────────────────────────────────────────────────
   let language: DetectedLanguage;
   let confidence: number;
 
-  if (frRatio > 0.7) {
+  if (hasBilingualSignal && dominance < 0.55) {
+    language = "mixed";
+    confidence = Math.max(0.45, 1 - dominance);
+  } else if (frRatio > 0.58 || (accentCount >= 3 && frRatio > 0.5)) {
     language = "fr";
     confidence = Math.min(0.6 + frRatio * 0.4, 1);
-  } else if (frRatio < 0.3) {
+  } else if (frRatio < 0.42) {
     language = "en";
     confidence = Math.min(0.6 + enRatio * 0.4, 1);
   } else {

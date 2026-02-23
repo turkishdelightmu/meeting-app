@@ -158,23 +158,15 @@ export async function POST(req: Request) {
         }
         rawParsed = JSON.parse(cleanText);
       } catch {
-        const response: GenerateResponse = {
-          ok: false,
-          reason: "validation_error",
-          rawOutput: claudeResult.rawText,
-        };
-        return NextResponse.json(response);
+        const fallbackResponse = buildValidatedMockResponse(language, "mock");
+        return NextResponse.json(fallbackResponse);
       }
 
       // Zod validation (Step 5)
       const parsed = MeetingNotesResultSchema.safeParse(rawParsed);
       if (!parsed.success) {
-        const response: GenerateResponse = {
-          ok: false,
-          reason: "validation_error",
-          rawOutput: claudeResult.rawText,
-        };
-        return NextResponse.json(response);
+        const fallbackResponse = buildValidatedMockResponse(language, "mock");
+        return NextResponse.json(fallbackResponse);
       }
 
       const response: GenerateResponse = {

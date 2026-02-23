@@ -147,6 +147,12 @@ Run only Step 5 retry tests:
 npx playwright test tests/e2e/step5-retry.spec.ts
 ```
 
+Run only Step 8 action tests:
+
+```bash
+npx playwright test tests/e2e/step8-actions.spec.ts
+```
+
 ## Project Structure (Key Files)
 
 - `src/app/api/detect/route.ts` — Step 3 language-detection stub API
@@ -164,6 +170,7 @@ npx playwright test tests/e2e/step5-retry.spec.ts
 - `src/types/api.ts` — includes `GenerateResponse` source metadata (`claude` / `mock`)
 - `src/schemas/meeting-notes.ts` — Step 5 Zod validation schemas for MeetingNotesResult
 - `tests/e2e/step5-retry.spec.ts` — Step 5 deterministic E2E coverage for retry-once behavior
+- `tests/e2e/step8-actions.spec.ts` — Step 8 E2E coverage for copy actions, feedback toggles, and analytics logs
 - `playwright.config.ts` — Playwright runner config for local E2E tests
 - `src/types/ui-states.ts` — state enum, output mode type, char limits
 
