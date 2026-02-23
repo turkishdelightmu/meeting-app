@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Meeting Note Cleaner - Empty State</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#136dec",
+                        "primary-hover": "#0f5bbb",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101822",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Custom scrollbar for textarea */
+        textarea::-webkit-scrollbar {
+            width: 8px;
+        }
+        textarea::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        textarea::-webkit-scrollbar-thumb {
+            background-color: #e2e8f0;
+            border-radius: 20px;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen flex flex-col overflow-hidden">
+<!-- Top Navigation -->
+<header class="w-full bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 py-3 flex items-center justify-between z-10 sticky top-0">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">description</span>
+</div>
+<h1 class="text-slate-900 dark:text-white text-lg font-bold tracking-tight">Meeting Note Cleaner</h1>
+</div>
+<div class="flex items-center gap-3">
+<button class="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-600 dark:text-slate-400 text-sm font-medium">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+<span class="hidden sm:inline">Settings</span>
+</button>
+<div class="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-1"></div>
+<div class="flex items-center gap-2">
+<div class="size-8 rounded-full bg-gradient-to-tr from-primary to-blue-400 flex items-center justify-center text-white font-bold text-xs" data-alt="User avatar gradient">
+                    JD
+                </div>
+</div>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="flex-1 overflow-y-auto w-full max-w-[1600px] mx-auto p-4 md:p-6 lg:p-8">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full min-h-[calc(100vh-140px)]">
+<!-- Left Column: Input -->
+<section class="flex flex-col bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden group">
+<div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">edit_note</span>
+<h2 class="text-base font-semibold text-slate-900 dark:text-white">Input Transcript</h2>
+</div>
+<button class="text-slate-400 hover:text-primary transition-colors" title="Clear text">
+<span class="material-symbols-outlined text-[20px]">refresh</span>
+</button>
+</div>
+<div class="flex-1 p-0 relative">
+<textarea class="w-full h-full p-6 resize-none border-0 focus:ring-0 text-slate-700 dark:text-slate-300 placeholder:text-slate-400 dark:placeholder:text-slate-600 bg-transparent text-base leading-relaxed" placeholder="Paste your meeting transcript here to begin processing..."></textarea>
+</div>
+<!-- Control Bar -->
+<div class="p-4 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4">
+<div class="flex items-center gap-4 flex-wrap">
+<!-- Segmented Control -->
+<div class="flex items-center bg-slate-200 dark:bg-slate-800 rounded-lg p-1">
+<label class="cursor-pointer">
+<input checked="" class="peer sr-only" name="lang" type="radio"/>
+<div class="px-3 py-1.5 rounded-md text-sm font-medium text-slate-600 dark:text-slate-400 peer-checked:bg-white dark:peer-checked:bg-slate-700 peer-checked:text-primary peer-checked:shadow-sm transition-all">Auto</div>
+</label>
+<label class="cursor-pointer">
+<input class="peer sr-only" name="lang" type="radio"/>
+<div class="px-3 py-1.5 rounded-md text-sm font-medium text-slate-600 dark:text-slate-400 peer-checked:bg-white dark:peer-checked:bg-slate-700 peer-checked:text-primary peer-checked:shadow-sm transition-all">English</div>
+</label>
+<label class="cursor-pointer">
+<input class="peer sr-only" name="lang" type="radio"/>
+<div class="px-3 py-1.5 rounded-md text-sm font-medium text-slate-600 dark:text-slate-400 peer-checked:bg-white dark:peer-checked:bg-slate-700 peer-checked:text-primary peer-checked:shadow-sm transition-all">French</div>
+</label>
+</div>
+<!-- Character Counter -->
+<div class="text-xs font-medium text-slate-400 dark:text-slate-600">
+                            0 / 20,000 chars
+                        </div>
+</div>
+<!-- Generate Button -->
+<button class="flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-5 py-2 rounded-lg font-medium text-sm transition-colors shadow-sm shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed">
+<span class="material-symbols-outlined text-[18px]">auto_awesome</span>
+                        Generate Notes
+                    </button>
+</div>
+</section>
+<!-- Right Column: Output (Empty State) -->
+<section class="flex flex-col bg-white dark:bg-slate-900 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 shadow-sm relative overflow-hidden">
+<div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center opacity-50 pointer-events-none select-none">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-slate-500 text-[20px]">assignment</span>
+<h2 class="text-base font-semibold text-slate-500 dark:text-slate-400">Meeting Notes</h2>
+</div>
+</div>
+<div class="flex-1 flex flex-col items-center justify-center p-8 text-center h-full">
+<div class="size-24 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center mb-6">
+<span class="material-symbols-outlined text-slate-300 dark:text-slate-600 text-[48px]">topic</span>
+</div>
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">Ready to process</h3>
+<p class="text-slate-500 dark:text-slate-400 max-w-sm text-sm leading-relaxed">
+                        Paste a transcript on the left to generate structured notes, summaries, and action items instantly.
+                    </p>
+<!-- Decorative subtle list to hint at what's coming -->
+<div class="mt-10 w-full max-w-xs space-y-3 opacity-30 select-none pointer-events-none blur-[1px]">
+<div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-3/4 mx-auto"></div>
+<div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/2 mx-auto"></div>
+<div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-5/6 mx-auto"></div>
+</div>
+</div>
+</section>
+</div>
+</main>
+</body></html>

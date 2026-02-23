@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Meeting Note Cleaner - Success View</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#136dec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101822",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased h-screen flex flex-col overflow-hidden">
+<!-- Header -->
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 py-3 flex-shrink-0 z-10 shadow-sm">
+<div class="flex items-center gap-4">
+<div class="flex items-center justify-center bg-primary/10 rounded-lg p-2 text-primary">
+<span class="material-symbols-outlined text-2xl">auto_fix_high</span>
+</div>
+<h2 class="text-slate-900 dark:text-white text-lg font-bold leading-tight tracking-tight">Meeting Note Cleaner</h2>
+</div>
+<div class="flex items-center gap-3">
+<button class="flex items-center gap-2 px-4 py-2 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary transition-colors text-sm font-semibold">
+<span class="material-symbols-outlined text-[20px]">history</span>
+<span>History</span>
+</button>
+<button class="flex cursor-pointer items-center justify-center overflow-hidden rounded-lg h-9 px-4 bg-primary text-white hover:bg-blue-600 transition-colors text-sm font-bold leading-normal tracking-[0.015em] shadow-sm">
+<span class="material-symbols-outlined text-[18px] mr-2">add</span>
+<span class="truncate">New Meeting</span>
+</button>
+</div>
+</header>
+<!-- Main Content Grid -->
+<main class="flex flex-1 overflow-hidden">
+<!-- Left Column: Transcript -->
+<section class="flex-1 flex flex-col border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 min-w-[320px] max-w-[45%] h-full">
+<div class="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900 sticky top-0 z-10">
+<h1 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Original Transcript</h1>
+<span class="text-xs font-medium px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded text-uppercase tracking-wider">02:35</span>
+</div>
+<div class="flex-1 overflow-y-auto px-6 py-6 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700">
+<div class="space-y-6 max-w-2xl">
+<!-- Speaker A -->
+<div class="group">
+<div class="flex items-baseline justify-between mb-1">
+<span class="text-xs font-bold text-primary uppercase tracking-wider">Speaker A</span>
+<span class="text-[10px] text-slate-400 font-mono">00:00</span>
+</div>
+<p class="text-slate-700 dark:text-slate-300 text-sm leading-relaxed">
+                            Alright, let's get started. The main agenda item is the launch timeline.
+                        </p>
+</div>
+<!-- Speaker B -->
+<div class="group">
+<div class="flex items-baseline justify-between mb-1">
+<span class="text-xs font-bold text-indigo-500 uppercase tracking-wider">Speaker B</span>
+<span class="text-[10px] text-slate-400 font-mono">00:15</span>
+</div>
+<p class="text-slate-700 dark:text-slate-300 text-sm leading-relaxed">
+                            I think we need to push it back. The API integration is proving more difficult than expected. We're seeing some latency issues.
+                        </p>
+</div>
+<!-- Speaker A -->
+<div class="group">
+<div class="flex items-baseline justify-between mb-1">
+<span class="text-xs font-bold text-primary uppercase tracking-wider">Speaker A</span>
+<span class="text-[10px] text-slate-400 font-mono">00:45</span>
+</div>
+<p class="text-slate-700 dark:text-slate-300 text-sm leading-relaxed">
+                            That's concerning. How much of a delay are we talking about?
+                        </p>
+</div>
+<!-- Speaker B -->
+<div class="group">
+<div class="flex items-baseline justify-between mb-1">
+<span class="text-xs font-bold text-indigo-500 uppercase tracking-wider">Speaker B</span>
+<span class="text-[10px] text-slate-400 font-mono">00:52</span>
+</div>
+<p class="text-slate-700 dark:text-slate-300 text-sm leading-relaxed">
+                            At least two weeks. We need to refactor the data layer.
+                        </p>
+</div>
+<!-- Speaker C -->
+<div class="group">
+<div class="flex items-baseline justify-between mb-1">
+<span class="text-xs font-bold text-pink-500 uppercase tracking-wider">Speaker C</span>
+<span class="text-[10px] text-slate-400 font-mono">01:10</span>
+</div>
+<p class="text-slate-700 dark:text-slate-300 text-sm leading-relaxed bg-yellow-50 dark:bg-yellow-900/20 -mx-2 px-2 py-1 rounded">
+                            I agree with B. If we launch now, user experience will suffer. I'd rather delay than ship a buggy product.
+                        </p>
+</div>
+<!-- Speaker A -->
+<div class="group">
+<div class="flex items-baseline justify-between mb-1">
+<span class="text-xs font-bold text-primary uppercase tracking-wider">Speaker A</span>
+<span class="text-[10px] text-slate-400 font-mono">01:30</span>
+</div>
+<p class="text-slate-700 dark:text-slate-300 text-sm leading-relaxed">
+                            Okay, that's a tough call but I trust your judgment. Let's move the target to November 15th then. Sarah, can you update the stakeholders?
+                        </p>
+</div>
+<!-- Speaker B -->
+<div class="group">
+<div class="flex items-baseline justify-between mb-1">
+<span class="text-xs font-bold text-indigo-500 uppercase tracking-wider">Speaker B</span>
+<span class="text-[10px] text-slate-400 font-mono">01:45</span>
+</div>
+<p class="text-slate-700 dark:text-slate-300 text-sm leading-relaxed">
+                            Will do. I'll also update the roadmap docs.
+                        </p>
+</div>
+<!-- Speaker A -->
+<div class="group">
+<div class="flex items-baseline justify-between mb-1">
+<span class="text-xs font-bold text-primary uppercase tracking-wider">Speaker A</span>
+<span class="text-[10px] text-slate-400 font-mono">02:00</span>
+</div>
+<p class="text-slate-700 dark:text-slate-300 text-sm leading-relaxed">
+                           Great. Mike, we need to look into that API documentation issue you mentioned earlier. Is it a blocker?
+                        </p>
+</div>
+<!-- Speaker C -->
+<div class="group">
+<div class="flex items-baseline justify-between mb-1">
+<span class="text-xs font-bold text-pink-500 uppercase tracking-wider">Speaker C</span>
+<span class="text-[10px] text-slate-400 font-mono">02:15</span>
+</div>
+<p class="text-slate-700 dark:text-slate-300 text-sm leading-relaxed">
+                           Yes, it's outdated. I'll take lead on fixing that by Oct 20th.
+                        </p>
+</div>
+</div>
+</div>
+</section>
+<!-- Right Column: Processed Notes -->
+<section class="flex-[1.4] flex flex-col bg-slate-50 dark:bg-[#0b1118] h-full relative">
+<!-- Sticky Header for Right Panel -->
+<div class="px-8 py-5 flex justify-between items-center bg-slate-50/90 dark:bg-[#0b1118]/90 backdrop-blur-sm sticky top-0 z-10">
+<div class="flex gap-2 items-center">
+<span class="material-symbols-outlined text-green-500 text-xl">check_circle</span>
+<h2 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Processed Notes</h2>
+</div>
+<div class="flex gap-2">
+<span class="text-xs font-medium text-slate-500 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-1 rounded-full shadow-sm flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                        AI Confidence: High
+                    </span>
+</div>
+</div>
+<!-- Scrollable Content -->
+<div class="flex-1 overflow-y-auto px-8 pb-32 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600">
+<div class="max-w-4xl mx-auto space-y-8">
+<!-- 1. Summary Bullets -->
+<div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+<h3 class="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-4">
+<span class="material-symbols-outlined text-primary text-lg">summarize</span>
+                            Executive Summary
+                        </h3>
+<ul class="space-y-3">
+<li class="flex gap-3 items-start">
+<span class="material-symbols-outlined text-slate-400 text-lg mt-0.5 shrink-0">fiber_manual_record</span>
+<span class="text-slate-700 dark:text-slate-300 leading-relaxed">Product launch has been officially delayed by 2 weeks due to critical API latency issues.</span>
+</li>
+<li class="flex gap-3 items-start">
+<span class="material-symbols-outlined text-slate-400 text-lg mt-0.5 shrink-0">fiber_manual_record</span>
+<span class="text-slate-700 dark:text-slate-300 leading-relaxed">The new target launch date is confirmed for <strong>November 15th</strong>.</span>
+</li>
+<li class="flex gap-3 items-start">
+<span class="material-symbols-outlined text-slate-400 text-lg mt-0.5 shrink-0">fiber_manual_record</span>
+<span class="text-slate-700 dark:text-slate-300 leading-relaxed">The engineering team identified that the data layer requires significant refactoring.</span>
+</li>
+<li class="flex gap-3 items-start">
+<span class="material-symbols-outlined text-slate-400 text-lg mt-0.5 shrink-0">fiber_manual_record</span>
+<span class="text-slate-700 dark:text-slate-300 leading-relaxed">Mike will lead the update of outdated API documentation by Oct 20th.</span>
+</li>
+<li class="flex gap-3 items-start">
+<span class="material-symbols-outlined text-slate-400 text-lg mt-0.5 shrink-0">fiber_manual_record</span>
+<span class="text-slate-700 dark:text-slate-300 leading-relaxed">Stakeholders and roadmap documentation will be updated to reflect the new timeline immediately.</span>
+</li>
+</ul>
+</div>
+<!-- 2. Decisions -->
+<div class="space-y-4">
+<h3 class="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider px-1">
+<span class="material-symbols-outlined text-primary text-lg">gavel</span>
+                            Key Decisions
+                        </h3>
+<!-- Decision Card 1 -->
+<div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border-l-4 border-primary p-5 relative overflow-hidden group">
+<div class="flex justify-between items-start mb-3">
+<h4 class="text-lg font-semibold text-slate-900 dark:text-white leading-tight">Delay launch to November 15th</h4>
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+<span class="material-symbols-outlined text-[14px]">verified</span>
+                                    Confirmed
+                                </span>
+</div>
+<div class="flex flex-wrap gap-4 text-xs text-slate-500 dark:text-slate-400 mb-4 items-center">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">person</span>
+<span>Owner: <strong class="text-slate-700 dark:text-slate-200">Sarah (Speaker B)</strong></span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">calendar_today</span>
+<span>Effective: <strong class="text-slate-700 dark:text-slate-200">Immediate</strong></span>
+</div>
+</div>
+<div class="bg-slate-50 dark:bg-slate-900/50 rounded border border-slate-100 dark:border-slate-700 p-3">
+<p class="text-xs font-mono text-slate-500 dark:text-slate-400 flex gap-2">
+<span class="material-symbols-outlined text-[14px] mt-0.5 opacity-50">format_quote</span>
+                                    "Let's move the target to November 15th then. Sarah, can you update the stakeholders?"
+                                </p>
+</div>
+</div>
+</div>
+<!-- 3. Next Steps -->
+<div class="space-y-4">
+<h3 class="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider px-1">
+<span class="material-symbols-outlined text-primary text-lg">checklist</span>
+                            Next Steps
+                        </h3>
+<div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 divide-y divide-slate-100 dark:divide-slate-700">
+<!-- Action 1 -->
+<div class="p-4 flex items-start gap-4 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+<div class="mt-1">
+<input class="h-5 w-5 rounded border-slate-300 text-primary focus:ring-primary/20 cursor-pointer" type="checkbox"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between gap-4 mb-1">
+<p class="text-sm font-semibold text-slate-900 dark:text-white truncate">Update stakeholders on timeline shift</p>
+<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 uppercase tracking-wide">High</span>
+</div>
+<div class="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+<div class="flex items-center gap-1">
+<div class="w-5 h-5 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-[10px]">S</div>
+<span>Sarah</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">event</span>
+<span>ASAP</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Action 2 -->
+<div class="p-4 flex items-start gap-4 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+<div class="mt-1">
+<input class="h-5 w-5 rounded border-slate-300 text-primary focus:ring-primary/20 cursor-pointer" type="checkbox"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between gap-4 mb-1">
+<p class="text-sm font-semibold text-slate-900 dark:text-white truncate">Fix outdated API documentation</p>
+<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 uppercase tracking-wide">Medium</span>
+</div>
+<div class="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+<div class="flex items-center gap-1">
+<div class="w-5 h-5 rounded-full bg-pink-100 text-pink-600 flex items-center justify-center font-bold text-[10px]">M</div>
+<span>Mike</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">event</span>
+<span>Oct 20</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Action 3 -->
+<div class="p-4 flex items-start gap-4 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+<div class="mt-1">
+<input class="h-5 w-5 rounded border-slate-300 text-primary focus:ring-primary/20 cursor-pointer" type="checkbox"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between gap-4 mb-1">
+<p class="text-sm font-semibold text-slate-900 dark:text-white truncate">Update roadmap documentation</p>
+</div>
+<div class="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+<div class="flex items-center gap-1">
+<div class="w-5 h-5 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-[10px]">S</div>
+<span>Sarah</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- 4. Risks & Blockers -->
+<div class="grid grid-cols-2 gap-6">
+<!-- Risks -->
+<div class="bg-red-50 dark:bg-red-900/10 rounded-xl p-5 border border-red-100 dark:border-red-900/30">
+<h3 class="flex items-center gap-2 text-sm font-bold text-red-800 dark:text-red-400 uppercase tracking-wider mb-3">
+<span class="material-symbols-outlined text-lg">warning</span>
+                                Risks &amp; Blockers
+                            </h3>
+<ul class="space-y-2">
+<li class="text-sm text-red-900/80 dark:text-red-200 flex gap-2">
+<span class="mt-1.5 w-1 h-1 rounded-full bg-red-400 shrink-0"></span>
+<span>API documentation is outdated (Blocker)</span>
+</li>
+<li class="text-sm text-red-900/80 dark:text-red-200 flex gap-2">
+<span class="mt-1.5 w-1 h-1 rounded-full bg-red-400 shrink-0"></span>
+<span>Data layer refactoring complexity</span>
+</li>
+</ul>
+</div>
+<!-- Open Questions -->
+<div class="bg-amber-50 dark:bg-amber-900/10 rounded-xl p-5 border border-amber-100 dark:border-amber-900/30">
+<h3 class="flex items-center gap-2 text-sm font-bold text-amber-800 dark:text-amber-400 uppercase tracking-wider mb-3">
+<span class="material-symbols-outlined text-lg">help</span>
+                                Open Questions
+                            </h3>
+<ul class="space-y-2">
+<li class="text-sm text-amber-900/80 dark:text-amber-200 flex gap-2">
+<span class="mt-1.5 w-1 h-1 rounded-full bg-amber-400 shrink-0"></span>
+<span>Specific scope of data layer refactor?</span>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Floating Action Bar -->
+<div class="absolute bottom-6 left-0 right-0 px-8 flex justify-center pointer-events-none z-20">
+<div class="bg-white dark:bg-slate-800 rounded-full shadow-lg border border-slate-200 dark:border-slate-700 p-2 pl-6 pr-2 flex items-center gap-6 pointer-events-auto max-w-lg w-full justify-between">
+<div class="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 font-medium">
+<span>Was this useful?</span>
+<div class="flex gap-1">
+<button class="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded text-slate-400 hover:text-green-500 transition-colors">
+<span class="material-symbols-outlined text-[20px]">thumb_up</span>
+</button>
+<button class="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded text-slate-400 hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined text-[20px]">thumb_down</span>
+</button>
+</div>
+</div>
+<div class="h-6 w-px bg-slate-200 dark:bg-slate-700"></div>
+<div class="flex gap-2">
+<button class="flex items-center gap-2 px-3 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg transition-colors text-xs font-bold border border-transparent hover:border-slate-200 dark:hover:border-slate-600">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+<span>Text</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-2 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-full hover:opacity-90 transition-opacity text-xs font-bold shadow-md">
+<span class="material-symbols-outlined text-[16px]">markdown</span>
+<span>Copy Markdown</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+</main>
+</body></html>
