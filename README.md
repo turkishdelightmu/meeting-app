@@ -2,7 +2,7 @@
 
 Meeting Note Cleaner is a Next.js 14 App Router project for transforming raw meeting transcripts into structured notes.
 
-This repository currently includes **Steps 1–7** of the implementation plan.
+This repository currently includes **Steps 1–8** of the implementation plan.
 
 ## Step 1 Scope (Implemented)
 
@@ -76,22 +76,35 @@ This repository currently includes **Steps 1–7** of the implementation plan.
 - **SuccessState translation** — all static strings in the success panel are driven by `data.language`, so French output gets French UI chrome
 - **Claude prompt unchanged** — the system prompt already instructs Claude to output in the requested language; no prompt changes were needed
 
+## Step 8 Scope (Implemented)
+
+- **Copy as plain text** — converts `MeetingNotesResult` to a human-readable plain-text format and copies to clipboard
+- **Copy as Markdown** — converts `MeetingNotesResult` to well-structured Markdown (with task lists, blockquotes, emoji markers) and copies to clipboard
+- **"Copied!" toast** — brief animated toast notification after successful copy, bilingual (EN/FR)
+- **Feedback thumbs** — thumbs up/down buttons with toggle state and visual highlight; clicking again deselects
+- **Instrumentation** — lightweight `trackEvent()` logger that fires on `copy_text`, `copy_markdown`, `feedback_up`, `feedback_down`, `generate_start`, `generate_success`, `generate_error` — currently console-based, ready to swap in a real analytics provider
+- **Bilingual formatters** — plain-text and Markdown output uses i18n section headings matching the selected language
+
 ## Implementation Status
 
-| Step   | Description                                                   | Status     |
-| ------ | ------------------------------------------------------------- | ---------- |
-| Step 1 | Import Stitch UI + route + 7-state machine (no backend calls) | ✅ Done    |
-| Step 2 | Types + success rendering from mock JSON                      | ✅ Done    |
-| Step 3 | API wiring with stub responses                                | ✅ Done    |
-| Step 4 | Real language detection behavior                              | ✅ Done    |
-| Step 5 | Zod validation + retry once plumbing                          | ✅ Done    |
-| Step 6 | Claude integration + strict JSON prompts                      | ✅ Done    |
-| Step 7 | Translation rules for `force_en` / `force_fr`                 | ✅ Done    |
-| Step 8 | P1 features: copy, feedback, instrumentation                  | ⏳ Pending |
+| Step   | Description                                                   | Status  |
+| ------ | ------------------------------------------------------------- | ------- |
+| Step 1 | Import Stitch UI + route + 7-state machine (no backend calls) | ✅ Done |
+| Step 2 | Types + success rendering from mock JSON                      | ✅ Done |
+| Step 3 | API wiring with stub responses                                | ✅ Done |
+| Step 4 | Real language detection behavior                              | ✅ Done |
+| Step 5 | Zod validation + retry once plumbing                          | ✅ Done |
+| Step 6 | Claude integration + strict JSON prompts                      | ✅ Done |
+| Step 7 | Translation rules for `force_en` / `force_fr`                 | ✅ Done |
+| Step 8 | P1 features: copy, feedback, instrumentation                  | ✅ Done |
 
-## Not Implemented Yet (Planned in Next Steps)
+## Not Implemented Yet
 
-- P1 extras (copy actions, feedback events, instrumentation wiring)
+All 8 steps are complete. Future enhancements could include:
+
+- Persistent feedback storage (database)
+- Real analytics provider integration (Mixpanel, PostHog, etc.)
+- Server-side copy fallback for older browsers
 
 ## Tech Stack
 
@@ -146,6 +159,8 @@ npx playwright test tests/e2e/step5-retry.spec.ts
 - `src/data/mock-meeting-notes.ts` — Step 2 mock output payload
 - `src/types/meeting-notes.ts` — Step 2 processed-notes schema
 - `src/lib/i18n.ts` — Step 7 bilingual label map (EN/FR) for SuccessState UI strings
+- `src/lib/format.ts` — Step 8 plain-text and Markdown formatters for MeetingNotesResult
+- `src/lib/analytics.ts` — Step 8 lightweight event logger (console-based, swappable)
 - `src/types/api.ts` — includes `GenerateResponse` source metadata (`claude` / `mock`)
 - `src/schemas/meeting-notes.ts` — Step 5 Zod validation schemas for MeetingNotesResult
 - `tests/e2e/step5-retry.spec.ts` — Step 5 deterministic E2E coverage for retry-once behavior
@@ -159,3 +174,4 @@ npx playwright test tests/e2e/step5-retry.spec.ts
 - With `ANTHROPIC_API_KEY` set, Claude generates real structured notes. Without it, mock data is returned.
 - Success header displays `Source: Claude` or `Source: Mock` for each run.
 - Success content and UI labels are fully bilingual (English/French) as of Step 7.
+- Copy and feedback actions are fully wired as of Step 8; analytics events log to console.

@@ -1,5 +1,10 @@
+"use client";
+
+import { useState, useCallback } from "react";
 import type { MeetingNotesResult, ConfidenceLevel, DecisionStatus, Priority } from "@/types/meeting-notes";
 import { getLabels } from "@/lib/i18n";
+import { toPlainText, toMarkdown } from "@/lib/format";
+import { trackEvent } from "@/lib/analytics";
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -61,6 +66,44 @@ interface SuccessStateProps {
 
 export default function SuccessState({ data, source }: SuccessStateProps) {
   const t = getLabels(data.language);
+
+  // ── Step 8: copy + feedback state ──────────────────────────────────────────
+  const [copyToast, setCopyToast] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<"up" | "down" | null>(null);
+
+  const showToast = useCallback((msg: string) => {
+    setCopyToast(msg);
+    setTimeout(() => setCopyToast(null), 1800);
+  }, []);
+
+  const handleCopyText = useCallback(async () => {
+    const text = toPlainText(data);
+    await navigator.clipboard.writeText(text);
+    trackEvent({ name: "copy_text", language: data.language, source });
+    showToast(t.copied);
+  }, [data, source, showToast, t.copied]);
+
+  const handleCopyMarkdown = useCallback(async () => {
+    const md = toMarkdown(data);
+    await navigator.clipboard.writeText(md);
+    trackEvent({ name: "copy_markdown", language: data.language, source });
+    showToast(t.copied);
+  }, [data, source, showToast, t.copied]);
+
+  const handleFeedback = useCallback(
+    (vote: "up" | "down") => {
+      const next = feedback === vote ? null : vote;
+      setFeedback(next);
+      if (next) {
+        trackEvent({
+          name: next === "up" ? "feedback_up" : "feedback_down",
+          language: data.language,
+          source,
+        });
+      }
+    },
+    [feedback, data.language, source]
+  );
 
   return (
     <section className="flex flex-col bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden">
@@ -278,16 +321,37 @@ export default function SuccessState({ data, source }: SuccessStateProps) {
         </div>
       </div>
 
+      {/* ── Copy toast ─────────────────────────────────────── */}
+      {copyToast && (
+        <div className="absolute top-4 right-4 z-10 bg-slate-900 text-white text-xs font-medium px-3 py-1.5 rounded-lg shadow-lg animate-fade-in">
+          {copyToast}
+        </div>
+      )}
+
       {/* ── Bottom Action Bar ──────────────────────────────────── */}
       <div className="p-3 border-t border-slate-100 dark:border-slate-800 flex justify-center">
         <div className="bg-slate-50 dark:bg-slate-800 rounded-full shadow-sm border border-slate-200 dark:border-slate-700 py-1.5 px-3 inline-flex items-center gap-2">
           <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 font-medium">
             <span>{t.wasThisUseful}</span>
             <div className="flex gap-1">
-              <button className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded text-slate-400 hover:text-green-500 transition-colors">
+              <button
+                onClick={() => handleFeedback("up")}
+                className={`p-1 rounded transition-colors ${
+                  feedback === "up"
+                    ? "bg-green-100 dark:bg-green-900/40 text-green-600"
+                    : "text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-green-500"
+                }`}
+              >
                 <span className="material-symbols-outlined text-[20px]">thumb_up</span>
               </button>
-              <button className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded text-slate-400 hover:text-red-500 transition-colors">
+              <button
+                onClick={() => handleFeedback("down")}
+                className={`p-1 rounded transition-colors ${
+                  feedback === "down"
+                    ? "bg-red-100 dark:bg-red-900/40 text-red-600"
+                    : "text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-red-500"
+                }`}
+              >
                 <span className="material-symbols-outlined text-[20px]">thumb_down</span>
               </button>
             </div>
@@ -295,6 +359,7 @@ export default function SuccessState({ data, source }: SuccessStateProps) {
           <div className="h-4 w-px bg-slate-200 dark:bg-slate-700" />
           <div className="flex gap-1">
             <button
+              onClick={handleCopyText}
               className="size-8 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 rounded-full transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-600"
               title={t.copyAsText}
               aria-label={t.copyAsText}
@@ -302,6 +367,7 @@ export default function SuccessState({ data, source }: SuccessStateProps) {
               <span className="material-symbols-outlined text-[16px]">content_copy</span>
             </button>
             <button
+              onClick={handleCopyMarkdown}
               className="size-8 flex items-center justify-center bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-full hover:opacity-90 transition-opacity shadow-md"
               title={t.copyAsMarkdown}
               aria-label={t.copyAsMarkdown}

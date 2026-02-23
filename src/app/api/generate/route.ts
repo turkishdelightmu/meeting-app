@@ -81,7 +81,12 @@ function shouldFallbackToMockForClaudeError(message: string): boolean {
     normalized.includes("plans & billing") ||
     normalized.includes("invalid x-api-key") ||
     normalized.includes("authentication_error") ||
-    normalized.includes("permission_error")
+    normalized.includes("permission_error") ||
+    normalized.includes("load failed") ||
+    normalized.includes("failed to fetch") ||
+    normalized.includes("network") ||
+    normalized.includes("timeout") ||
+    normalized.includes("socket")
   );
 }
 

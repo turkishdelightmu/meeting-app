@@ -15,6 +15,7 @@ import SuccessState from "@/components/stitch/SuccessState";
 import ValidationErrorState from "@/components/stitch/ValidationErrorState";
 import ModelRefusalState from "@/components/stitch/ModelRefusalState";
 import DevToggle from "@/components/stitch/DevToggle";
+import { trackEvent } from "@/lib/analytics";
 
 export default function MeetingNoteCleanerPage() {
   const [transcript, setTranscript] = useState("");
@@ -37,6 +38,7 @@ export default function MeetingNoteCleanerPage() {
   // Keep a stable ref to current transcript + outputMode for retry
   const transcriptRef = useRef(transcript);
   const outputModeRef = useRef(outputMode);
+  const generateStartRef = useRef(0);
   transcriptRef.current = transcript;
   outputModeRef.current = resolvedOutputModeForUI;
 
@@ -148,7 +150,14 @@ export default function MeetingNoteCleanerPage() {
             mode === "force_fr" ? "force_fr" : "force_en";
           setOutputMode(effectiveMode);
           setUiState(UIState.SUCCESS);
+          trackEvent({
+            name: "generate_success",
+            language: data.result.language,
+            source: data.source,
+            durationMs: Date.now() - generateStartRef.current,
+          });
         } else if (data.reason === "refusal") {
+          trackEvent({ name: "generate_error", reason: "refusal" });
           setUiState(UIState.MODEL_REFUSAL);
         } else if (data.reason === "validation_error") {
           // ── Retry-once plumbing (Step 5) ──────────────────────────────
@@ -157,17 +166,21 @@ export default function MeetingNoteCleanerPage() {
             await callGenerate(text, mode, { isRetry: true });
           } else {
             // Second failure → surface the error to the user
+            trackEvent({ name: "generate_error", reason: "validation_error" });
             setValidationRaw(data.rawOutput);
             setUiState(UIState.VALIDATION_ERROR);
           }
         } else if (data.reason === "server_error") {
+          trackEvent({ name: "generate_error", reason: "server_error" });
           setValidationRaw(data.message);
           setUiState(UIState.VALIDATION_ERROR);
         } else {
+          trackEvent({ name: "generate_error", reason: "unknown" });
           setValidationRaw("Unexpected error response from server");
           setUiState(UIState.VALIDATION_ERROR);
         }
       } catch (err) {
+        trackEvent({ name: "generate_error", reason: "network" });
         setValidationRaw(err instanceof Error ? err.message : String(err));
         setUiState(UIState.VALIDATION_ERROR);
       }
@@ -179,6 +192,8 @@ export default function MeetingNoteCleanerPage() {
 
   const handleGenerate = useCallback(async () => {
     setUiState(UIState.LOADING);
+    generateStartRef.current = Date.now();
+    trackEvent({ name: "generate_start", outputMode: outputModeRef.current });
 
     try {
       // Step 1: detect language (only matters when outputMode === "auto")

@@ -37,6 +37,7 @@ export interface UILabels {
   wasThisUseful: string;
   copyAsText: string;
   copyAsMarkdown: string;
+  copied: string;
 }
 
 const en: UILabels = {
@@ -64,6 +65,7 @@ const en: UILabels = {
   wasThisUseful: "Was this useful?",
   copyAsText: "Copy as text",
   copyAsMarkdown: "Copy as markdown",
+  copied: "Copied!",
 };
 
 const fr: UILabels = {
@@ -91,6 +93,7 @@ const fr: UILabels = {
   wasThisUseful: "Était-ce utile ?",
   copyAsText: "Copier en texte",
   copyAsMarkdown: "Copier en markdown",
+  copied: "Copié !",
 };
 
 const labelsByLanguage: Record<UILanguage, UILabels> = { en, fr };
