@@ -1,6 +1,6 @@
 # Meeting Note Cleaner (MVP)
 
-Meeting Note Cleaner is a Next.js 14 App Router project for transforming raw meeting transcripts into structured notes.
+Meeting Note Cleaner is a Next.js 14 App Router project for transforming raw meeting transcripts into structured notes
 
 This repository currently includes **Steps 1–8** of the implementation plan.
 
