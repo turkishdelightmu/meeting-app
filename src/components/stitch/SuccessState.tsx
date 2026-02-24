@@ -24,37 +24,37 @@ const confidenceColor: Record<ConfidenceLevel, string> = {
 
 const statusStyle: Record<DecisionStatus, { bg: string; text: string; icon: string }> = {
   confirmed: {
-    bg: "bg-green-100 dark:bg-green-900/30",
+    bg: "bg-green-100 dark:bg-green-500/10 dark:border dark:border-green-500/20",
     text: "text-green-800 dark:text-green-400",
     icon: "verified",
   },
   tentative: {
-    bg: "bg-yellow-100 dark:bg-yellow-900/30",
+    bg: "bg-yellow-100 dark:bg-yellow-500/10 dark:border dark:border-yellow-500/20",
     text: "text-yellow-800 dark:text-yellow-400",
     icon: "pending",
   },
   rejected: {
-    bg: "bg-red-100 dark:bg-red-900/30",
+    bg: "bg-red-100 dark:bg-red-500/10 dark:border dark:border-red-500/20",
     text: "text-red-800 dark:text-red-400",
     icon: "cancel",
   },
 };
 
 const priorityStyle: Record<Priority, { bg: string; text: string }> = {
-  high: { bg: "bg-red-100 dark:bg-red-900/30", text: "text-red-700 dark:text-red-400" },
-  medium: { bg: "bg-orange-100 dark:bg-orange-900/30", text: "text-orange-700 dark:text-orange-400" },
-  low: { bg: "bg-slate-100 dark:bg-slate-700", text: "text-slate-600 dark:text-slate-300" },
+  high: { bg: "bg-red-100 dark:bg-red-500/10 dark:border dark:border-red-500/20", text: "text-red-700 dark:text-red-400" },
+  medium: { bg: "bg-orange-100 dark:bg-orange-500/10 dark:border dark:border-orange-500/20", text: "text-orange-700 dark:text-orange-400" },
+  low: { bg: "bg-slate-100 dark:bg-zinc-800", text: "text-slate-600 dark:text-zinc-300" },
 };
 
 // Deterministic avatar colours keyed off the initial letter
 const avatarPalettes: Record<string, string> = {
-  S: "bg-indigo-100 text-indigo-600",
-  M: "bg-pink-100 text-pink-600",
-  J: "bg-emerald-100 text-emerald-600",
-  A: "bg-amber-100 text-amber-600",
+  S: "bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-300 dark:border dark:border-indigo-500/30",
+  M: "bg-pink-100 text-pink-600 dark:bg-pink-900/50 dark:text-pink-300 dark:border dark:border-pink-500/30",
+  J: "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-300 dark:border dark:border-emerald-500/30",
+  A: "bg-amber-100 text-amber-600 dark:bg-amber-900/50 dark:text-amber-300 dark:border dark:border-amber-500/30",
 };
 function avatarColor(initial: string) {
-  return avatarPalettes[initial] ?? "bg-slate-200 text-slate-600";
+  return avatarPalettes[initial] ?? "bg-slate-200 text-slate-600 dark:bg-zinc-800 dark:text-zinc-300";
 }
 
 function normalizeDisplayTitle(value: string): string {
@@ -119,9 +119,9 @@ export default function SuccessState({ data, source }: SuccessStateProps) {
   );
 
   return (
-    <section className="flex flex-col bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden">
+    <section className="flex flex-col bg-white dark:bg-card-dark rounded-xl border border-slate-200 dark:border-border-dark shadow-sm relative overflow-hidden">
       {/* ── Header ─────────────────────────────────────────────── */}
-      <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+      <div className="px-6 py-4 border-b border-slate-100 dark:border-border-dark flex justify-between items-center">
         <div className="flex gap-2 items-center">
           <span className="material-symbols-outlined text-green-500 text-xl">
             check_circle
@@ -131,10 +131,10 @@ export default function SuccessState({ data, source }: SuccessStateProps) {
           </h2>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-slate-500 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-1 rounded-full shadow-sm">
+          <span className="text-xs font-medium text-slate-500 dark:text-zinc-400 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 px-3 py-1 rounded-full shadow-sm">
             {t.sourceLabel}: {source === "claude" ? t.sourceClaude : source === "ollama" ? t.sourceOllama : t.sourceMock}
           </span>
-          <span className="text-xs font-medium text-slate-500 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-1 rounded-full shadow-sm flex items-center gap-1">
+          <span className="text-xs font-medium text-slate-500 dark:text-zinc-400 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 px-3 py-1 rounded-full shadow-sm flex items-center gap-1">
             <span className={`w-1.5 h-1.5 rounded-full ${confidenceColor[data.confidence]}`} />
             {t.aiConfidence}: {t.confidence[data.confidence]}
           </span>
@@ -147,7 +147,7 @@ export default function SuccessState({ data, source }: SuccessStateProps) {
 
           {/* 1 ▸ Executive Summary */}
           {data.summary.length > 0 && (
-            <div className="bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
+            <div className="bg-slate-50 dark:bg-zinc-800/50 rounded-xl border border-slate-200 dark:border-zinc-700 p-6">
               <h3 className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-4">
                 <span className="material-symbols-outlined text-primary text-lg">summarize</span>
                 {t.executiveSummary}
@@ -179,7 +179,7 @@ export default function SuccessState({ data, source }: SuccessStateProps) {
                 return (
                   <div
                     key={i}
-                    className="bg-slate-50 dark:bg-slate-800 rounded-xl shadow-sm border-l-4 border-primary p-5 relative overflow-hidden"
+                    className="bg-slate-50 dark:bg-zinc-800/50 rounded-xl shadow-sm border-l-4 border-primary p-5 relative overflow-hidden"
                   >
                     {/* title + badge */}
                     <div className="flex justify-between items-start mb-3">
@@ -196,7 +196,7 @@ export default function SuccessState({ data, source }: SuccessStateProps) {
 
                     {/* owner / effective date chips */}
                     {(d.owner || d.effectiveDate) && (
-                      <div className="flex flex-wrap gap-4 text-xs text-slate-500 dark:text-slate-400 mb-4 items-center">
+                      <div className="flex flex-wrap gap-4 text-xs text-slate-500 dark:text-zinc-400 mb-4 items-center">
                         {d.owner && (
                           <div className="flex items-center gap-1.5">
                             <span className="material-symbols-outlined text-[16px]">person</span>
@@ -218,8 +218,8 @@ export default function SuccessState({ data, source }: SuccessStateProps) {
 
                     {/* evidence quote chip */}
                     {d.evidenceQuote && (
-                      <div className="bg-white dark:bg-slate-900/50 rounded border border-slate-100 dark:border-slate-700 p-3">
-                        <p className="text-xs font-mono text-slate-500 dark:text-slate-400 flex gap-2">
+                      <div className="bg-white dark:bg-zinc-900/50 rounded border border-slate-100 dark:border-zinc-700 p-3">
+                        <p className="text-xs font-mono text-slate-500 dark:text-zinc-400 flex gap-2">
                           <span className="material-symbols-outlined text-[14px] mt-0.5 opacity-50">
                             format_quote
                           </span>
@@ -240,9 +240,9 @@ export default function SuccessState({ data, source }: SuccessStateProps) {
                 <span className="material-symbols-outlined text-primary text-lg">checklist</span>
                 {t.nextSteps}
               </h3>
-              <div className="bg-slate-50 dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 divide-y divide-slate-100 dark:divide-slate-700">
+              <div className="bg-slate-50 dark:bg-zinc-800/50 rounded-xl shadow-sm border border-slate-200 dark:border-zinc-700 divide-y divide-slate-100 dark:divide-zinc-700">
                 {data.actionItems.map((item, i) => (
-                  <div key={i} className="p-4 flex items-start gap-4 hover:bg-white dark:hover:bg-slate-700/50 transition-colors">
+                  <div key={i} className="p-4 flex items-start gap-4 hover:bg-white dark:hover:bg-zinc-700/50 transition-colors">
                     <div className="mt-1">
                       <input
                         type="checkbox"
@@ -263,7 +263,7 @@ export default function SuccessState({ data, source }: SuccessStateProps) {
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+                      <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-zinc-400">
                         {item.assignee && (() => {
                           const displayInitial = item.assignee.trim().charAt(0).toUpperCase();
                           return (
@@ -296,14 +296,15 @@ export default function SuccessState({ data, source }: SuccessStateProps) {
             <div className={`grid ${infoGridClass} gap-6`}>
               {/* Risks */}
               {data.risks.length > 0 && (
-                <div className="bg-red-50 dark:bg-red-900/10 rounded-xl p-5 border border-red-100 dark:border-red-900/30">
+                <div className="bg-red-50 dark:bg-zinc-800/50 rounded-xl p-5 border border-red-100 dark:border-zinc-700 relative overflow-hidden">
+                  <div className="absolute bottom-0 left-0 w-24 h-24 bg-red-500/5 dark:bg-red-500/10 rounded-tr-full pointer-events-none" />
                   <h3 className="flex items-center gap-2 text-sm font-bold text-red-800 dark:text-red-400 uppercase tracking-wider mb-3">
                     <span className="material-symbols-outlined text-lg">warning</span>
                     {t.risksAndBlockers}
                   </h3>
                   <ul className="space-y-2">
                     {data.risks.map((r, i) => (
-                      <li key={i} className="text-sm text-red-900/80 dark:text-red-200 flex gap-2">
+                      <li key={i} className="text-sm text-red-900/80 dark:text-zinc-300 flex gap-2">
                         <span className="mt-1.5 w-1 h-1 rounded-full bg-red-400 shrink-0" />
                         <span>{r.text}</span>
                       </li>
@@ -314,14 +315,15 @@ export default function SuccessState({ data, source }: SuccessStateProps) {
 
               {/* Open Questions */}
               {data.openQuestions.length > 0 && (
-                <div className="bg-amber-50 dark:bg-amber-900/10 rounded-xl p-5 border border-amber-100 dark:border-amber-900/30">
+                <div className="bg-amber-50 dark:bg-zinc-800/50 rounded-xl p-5 border border-amber-100 dark:border-zinc-700 relative overflow-hidden">
+                  <div className="absolute bottom-0 left-0 w-24 h-24 bg-amber-500/5 dark:bg-amber-500/10 rounded-tr-full pointer-events-none" />
                   <h3 className="flex items-center gap-2 text-sm font-bold text-amber-800 dark:text-amber-400 uppercase tracking-wider mb-3">
                     <span className="material-symbols-outlined text-lg">help</span>
                     {t.openQuestions}
                   </h3>
                   <ul className="space-y-2">
                     {data.openQuestions.map((q, i) => (
-                      <li key={i} className="text-sm text-amber-900/80 dark:text-amber-200 flex gap-2">
+                      <li key={i} className="text-sm text-amber-900/80 dark:text-zinc-300 flex gap-2">
                         <span className="mt-1.5 w-1 h-1 rounded-full bg-amber-400 shrink-0" />
                         <span>{q.text}</span>
                       </li>
@@ -342,9 +344,9 @@ export default function SuccessState({ data, source }: SuccessStateProps) {
       )}
 
       {/* ── Bottom Action Bar ──────────────────────────────────── */}
-      <div className="p-3 border-t border-slate-100 dark:border-slate-800 flex justify-center">
-        <div className="bg-slate-50 dark:bg-slate-800 rounded-full shadow-sm border border-slate-200 dark:border-slate-700 py-1.5 px-3 inline-flex items-center gap-2">
-          <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 font-medium">
+      <div className="p-3 border-t border-slate-100 dark:border-border-dark flex justify-center">
+        <div className="bg-slate-50 dark:bg-zinc-800 rounded-full shadow-sm border border-slate-200 dark:border-zinc-700 py-1.5 px-3 inline-flex items-center gap-2">
+          <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-zinc-400 font-medium">
             <span>{t.wasThisUseful}</span>
             <div className="flex gap-1">
               <button
@@ -352,7 +354,7 @@ export default function SuccessState({ data, source }: SuccessStateProps) {
                 className={`p-1 rounded transition-colors ${
                   feedback === "up"
                     ? "bg-green-100 dark:bg-green-900/40 text-green-600"
-                    : "text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-green-500"
+                    : "text-slate-400 dark:text-zinc-500 hover:bg-slate-100 dark:hover:bg-zinc-700 hover:text-green-500"
                 }`}
               >
                 <span className="material-symbols-outlined text-[20px]">thumb_up</span>
@@ -362,18 +364,18 @@ export default function SuccessState({ data, source }: SuccessStateProps) {
                 className={`p-1 rounded transition-colors ${
                   feedback === "down"
                     ? "bg-red-100 dark:bg-red-900/40 text-red-600"
-                    : "text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-red-500"
+                    : "text-slate-400 dark:text-zinc-500 hover:bg-slate-100 dark:hover:bg-zinc-700 hover:text-red-500"
                 }`}
               >
                 <span className="material-symbols-outlined text-[20px]">thumb_down</span>
               </button>
             </div>
           </div>
-          <div className="h-4 w-px bg-slate-200 dark:bg-slate-700" />
+          <div className="h-4 w-px bg-slate-200 dark:bg-zinc-700" />
           <div className="flex gap-1">
             <button
               onClick={handleCopyText}
-              className="size-8 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700 rounded-full transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-600"
+              className="size-8 flex items-center justify-center text-slate-600 dark:text-zinc-300 hover:bg-white dark:hover:bg-zinc-700 rounded-full transition-colors border border-transparent hover:border-slate-200 dark:hover:border-zinc-600"
               title={t.copyAsText}
               aria-label={t.copyAsText}
             >
@@ -381,7 +383,7 @@ export default function SuccessState({ data, source }: SuccessStateProps) {
             </button>
             <button
               onClick={handleCopyMarkdown}
-              className="size-8 flex items-center justify-center bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-full hover:opacity-90 transition-opacity shadow-md"
+              className="size-8 flex items-center justify-center bg-slate-900 dark:bg-primary text-white rounded-full hover:opacity-90 transition-opacity shadow-md"
               title={t.copyAsMarkdown}
               aria-label={t.copyAsMarkdown}
             >

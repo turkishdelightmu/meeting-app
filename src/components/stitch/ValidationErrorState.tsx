@@ -8,8 +8,8 @@ export default function ValidationErrorState({
   onRetry,
 }: ValidationErrorStateProps) {
   return (
-    <section className="flex flex-col bg-white dark:bg-slate-900 rounded-xl border border-orange-200 dark:border-orange-900/50 shadow-sm relative overflow-hidden">
-      <div className="px-6 py-4 border-b border-orange-100 dark:border-orange-900/30 flex justify-between items-center">
+    <section className="flex flex-col bg-white dark:bg-card-dark rounded-xl border border-orange-200 dark:border-orange-500/30 shadow-sm relative overflow-hidden">
+      <div className="px-6 py-4 border-b border-orange-100 dark:border-orange-500/20 flex justify-between items-center">
         <div className="flex items-center gap-2">
           <span className="material-symbols-outlined text-orange-500 text-[20px]">
             error_outline
@@ -20,7 +20,7 @@ export default function ValidationErrorState({
         </div>
       </div>
       <div className="flex-1 flex flex-col items-center justify-center p-8 text-center min-h-[400px]">
-        <div className="size-24 rounded-full bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center mb-6">
+        <div className="size-24 rounded-full bg-orange-50 dark:bg-orange-500/10 flex items-center justify-center mb-6">
           <span className="material-symbols-outlined text-orange-400 dark:text-orange-500 text-[48px]">
             data_object
           </span>
@@ -28,7 +28,7 @@ export default function ValidationErrorState({
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
           Output validation failed
         </h3>
-        <p className="text-slate-500 dark:text-slate-400 max-w-sm text-sm leading-relaxed mb-6">
+        <p className="text-slate-500 dark:text-zinc-400 max-w-sm text-sm leading-relaxed mb-6">
           The AI response didn&apos;t match the expected format. A retry was
           attempted but the issue persisted.
         </p>
@@ -43,10 +43,10 @@ export default function ValidationErrorState({
 
         {rawOutput && (
           <details className="w-full max-w-lg text-left">
-            <summary className="cursor-pointer text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 font-medium">
+            <summary className="cursor-pointer text-xs text-slate-500 hover:text-slate-700 dark:hover:text-zinc-300 font-medium">
               Show raw AI output
             </summary>
-            <pre className="mt-2 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-400 overflow-auto max-h-60 whitespace-pre-wrap break-words">
+            <pre className="mt-2 p-4 bg-slate-50 dark:bg-zinc-800 rounded-lg border border-slate-200 dark:border-zinc-700 text-xs text-slate-600 dark:text-zinc-400 overflow-auto max-h-60 whitespace-pre-wrap break-words">
               {rawOutput}
             </pre>
           </details>
