@@ -190,6 +190,25 @@ function deriveInitial(assignee?: string): string | undefined {
   return first ? first.slice(0, 2) : undefined;
 }
 
+function inferAssigneeFromInitial(
+  assigneeInitial: string | undefined,
+  speakerNames: Set<string>
+): string | undefined {
+  const initial = assigneeInitial?.trim().charAt(0).toUpperCase();
+  if (!initial) {
+    return undefined;
+  }
+
+  const matches = Array.from(speakerNames).filter(
+    (name) => name.trim().charAt(0).toUpperCase() === initial
+  );
+
+  if (matches.length === 1) {
+    return matches[0];
+  }
+  return undefined;
+}
+
 function normalizeOllamaResult(raw: unknown, fallbackLanguage: "en" | "fr") {
   const fallbackSummary =
     fallbackLanguage === "fr"
@@ -219,8 +238,23 @@ function normalizeOllamaResult(raw: unknown, fallbackLanguage: "en" | "fr") {
 
   const decisions = toArray(root.decisions).map((item) => {
     const decision = isRecord(item) ? item : {};
+    const rawTitle = toOptionalString(decision.title);
+    const normalizedTitle = rawTitle ? normalizeForMatching(rawTitle) : "";
+    const hasGenericTitle =
+      normalizedTitle.length === 0 ||
+      normalizedTitle === "decision" ||
+      normalizedTitle === "decision cle" ||
+      normalizedTitle.startsWith("decision cle ") ||
+      normalizedTitle === "key decision" ||
+      normalizedTitle.startsWith("key decision ");
+    const fallbackFromEvidence = titleFromEvidence(
+      toOptionalString(decision.evidenceQuote),
+      fallbackLanguage
+    );
     return {
-      title: toNonEmptyString(decision.title, fallbackDecision),
+      title: hasGenericTitle
+        ? fallbackFromEvidence
+        : toNonEmptyString(decision.title, fallbackDecision),
       status: normalizeDecisionStatus(decision.status),
       owner: toOptionalString(decision.owner),
       effectiveDate: toOptionalString(decision.effectiveDate),
@@ -303,6 +337,8 @@ function normalizeOllamaResult(raw: unknown, fallbackLanguage: "en" | "fr") {
 
 function normalizeForMatching(value: string): string {
   return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, " ")
     .replace(/\s+/g, " ")
@@ -700,7 +736,10 @@ function sanitizeUngroundedTemporalFields(
         item.title,
         assignments
       );
-      const assignee = item.assignee ?? matchedAssignment?.assignee;
+      const assignee =
+        item.assignee ??
+        matchedAssignment?.assignee ??
+        inferAssigneeFromInitial(item.assigneeInitial, speakerNames);
       const normalizedAssigneeInitial = assignee
         ? deriveInitial(assignee)
         : item.assigneeInitial;
@@ -808,6 +847,11 @@ function enrichActionItemsFromTranscript(
     });
   };
 
+  const extractSpeakerForLine = (line: string): string | undefined => {
+    const speaker = line.match(/([A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ'-]*)\s*:/)?.[1];
+    return speaker?.trim();
+  };
+
   if (
     includesAnyPhrase(normalizeForMatching(transcript), [
       "internal announcement",
@@ -815,15 +859,15 @@ function enrichActionItemsFromTranscript(
     ]) &&
     !containsPhraseInOutput(enriched, ["internal announcement", "annonce interne"])
   ) {
-    const mention = transcript.match(
-      /([A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ'-]*)\s*:[^\n]*internal announcement/i
-    );
     const internalAnnouncementLine = transcript.match(
-      /[^\n]*internal announcement[^\n]*/i
+      /[^\n]*(?:internal announcement|annonce interne)[^\n]*/i
     )?.[0];
+    const assignee = internalAnnouncementLine
+      ? extractSpeakerForLine(internalAnnouncementLine)
+      : undefined;
     addActionItem(
       isFrench ? "Envoyer une annonce interne" : "Send internal announcement",
-      mention?.[1],
+      assignee,
       extractDateMention(internalAnnouncementLine ?? transcript)
     );
   }
@@ -842,15 +886,18 @@ function enrichActionItemsFromTranscript(
       "10h",
     ])
   ) {
-    const match = transcript.match(/next check-?in[^.\n]*/i);
-    const title = match?.[0]
+    const checkInLine = transcript.match(
+      /[^\n]*(?:next check-?in|prochain point)[^\n]*/i
+    )?.[0];
+    const title = checkInLine
       ? isFrench
-        ? `Confirmer ${match[0].trim()}`
-        : `Confirm ${match[0].trim()}`
+        ? `Confirmer ${checkInLine.trim()}`
+        : `Confirm ${checkInLine.trim()}`
       : isFrench
       ? "Confirmer l'horaire du prochain point"
       : "Confirm next check-in timing";
-    addActionItem(title, undefined, extractDateMention(match?.[0] ?? ""));
+    const assignee = checkInLine ? extractSpeakerForLine(checkInLine) : undefined;
+    addActionItem(title, assignee, extractDateMention(checkInLine ?? ""));
   }
 
   enriched.actionItems = dedupeActionItems(enriched.actionItems);
@@ -1440,6 +1487,9 @@ function isPlaceholderDecisionTitle(title: string): boolean {
   return (
     normalized === "decision" ||
     normalized === "decision cle" ||
+    normalized.startsWith("decision cle ") ||
+    normalized === "key decision" ||
+    normalized.startsWith("key decision ") ||
     normalized === "decison"
   );
 }
