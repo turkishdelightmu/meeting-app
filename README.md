@@ -92,6 +92,10 @@ This repository currently includes **Steps 1–8** of the implementation plan.
 - **Deterministic transcript enrichment** — Claude and Ollama outputs are post-processed from transcript cues to reduce sparse or underspecified notes
 - **French-aware enrichment text** — fallback labels and inferred section content now respect output language (`en` / `fr`)
 - **Dev controls off by default** — header dev state controls are hidden unless `NEXT_PUBLIC_ENABLE_DEV_UI=true`
+- **Dark mode toggle + persistence** — class-based theme switching is now implemented in the header, with preference persisted in `localStorage`
+- **Dark UI styling refresh** — Stitch components now use the dark design token set (`card-dark`, `border-dark`, zinc-based dark palette)
+- **French decision-title hardening** — generic placeholder titles (e.g. `Decision cle`) are replaced with evidence-derived titles where possible
+- **French assignee extraction improvements** — action-item assignees now resolve more reliably in French (including speaker-line extraction and `assigneeInitial` fallback inference)
 
 ## Implementation Status
 
@@ -258,3 +262,4 @@ npx playwright test tests/e2e/step8-actions.spec.ts
 - Success header displays `Source: Claude`, `Source: Ollama`, or `Source: Mock` for each run.
 - Success content and UI labels are fully bilingual (English/French) as of Step 7.
 - Copy and feedback actions are fully wired as of Step 8; analytics events log to console.
+- Theme switching is available from the header icon (`dark_mode` / `light_mode`) and applies to the full `/meeting-note-cleaner` UI.
