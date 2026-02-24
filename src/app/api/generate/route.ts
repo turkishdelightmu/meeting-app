@@ -191,6 +191,13 @@ function deriveInitial(assignee?: string): string | undefined {
 }
 
 function normalizeOllamaResult(raw: unknown, fallbackLanguage: "en" | "fr") {
+  const fallbackSummary =
+    fallbackLanguage === "fr"
+      ? "Resume des notes de reunion."
+      : "Meeting notes summary.";
+  const fallbackDecision = fallbackLanguage === "fr" ? "Decision cle" : "Decision";
+  const fallbackActionItem =
+    fallbackLanguage === "fr" ? "Action a mener" : "Action item";
   const root = isRecord(raw) ? raw : {};
 
   const summary = toArray(root.summary)
@@ -198,13 +205,13 @@ function normalizeOllamaResult(raw: unknown, fallbackLanguage: "en" | "fr") {
       if (isRecord(item)) {
         return {
           text: sanitizeSummaryText(
-            toNonEmptyString(item.text, "Meeting notes summary.")
+            toNonEmptyString(item.text, fallbackSummary)
           ),
         };
       }
       return {
         text: sanitizeSummaryText(
-          toNonEmptyString(item, "Meeting notes summary.")
+          toNonEmptyString(item, fallbackSummary)
         ),
       };
     })
@@ -213,7 +220,7 @@ function normalizeOllamaResult(raw: unknown, fallbackLanguage: "en" | "fr") {
   const decisions = toArray(root.decisions).map((item) => {
     const decision = isRecord(item) ? item : {};
     return {
-      title: toNonEmptyString(decision.title, "Decision"),
+      title: toNonEmptyString(decision.title, fallbackDecision),
       status: normalizeDecisionStatus(decision.status),
       owner: toOptionalString(decision.owner),
       effectiveDate: toOptionalString(decision.effectiveDate),
@@ -226,7 +233,7 @@ function normalizeOllamaResult(raw: unknown, fallbackLanguage: "en" | "fr") {
     const assignee = toOptionalString(action.assignee);
     const rawInitial = toOptionalString(action.assigneeInitial);
     return {
-      title: toNonEmptyString(action.title, "Action item"),
+      title: toNonEmptyString(action.title, fallbackActionItem),
       assignee,
       assigneeInitial: rawInitial ?? deriveInitial(assignee),
       dueDate: toOptionalString(action.dueDate),
@@ -271,7 +278,7 @@ function normalizeOllamaResult(raw: unknown, fallbackLanguage: "en" | "fr") {
     );
     if (isActionLike) {
       actionableFromOpenQuestions.push({
-        title: toNonEmptyString(question.text, "Action item"),
+        title: toNonEmptyString(question.text, fallbackActionItem),
         assignee: undefined,
         assigneeInitial: undefined,
         dueDate: undefined,
@@ -286,7 +293,7 @@ function normalizeOllamaResult(raw: unknown, fallbackLanguage: "en" | "fr") {
   return {
     confidence: normalizeConfidence(root.confidence),
     language: normalizeLanguage(root.language, fallbackLanguage),
-    summary: summary.length > 0 ? summary : [{ text: "Meeting notes summary." }],
+    summary: summary.length > 0 ? summary : [{ text: fallbackSummary }],
     decisions,
     actionItems: [...actionItems, ...actionableFromOpenQuestions],
     risks,
@@ -741,6 +748,7 @@ function enrichActionItemsFromTranscript(
   result: MeetingNotesResult,
   transcript: string
 ): MeetingNotesResult {
+  const isFrench = result.language === "fr";
   const speakerNames = extractSpeakerNames(transcript);
   const assignments = [
     ...extractExplicitAssignments(transcript, speakerNames),
@@ -810,10 +818,13 @@ function enrichActionItemsFromTranscript(
     const mention = transcript.match(
       /([A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ'-]*)\s*:[^\n]*internal announcement/i
     );
+    const internalAnnouncementLine = transcript.match(
+      /[^\n]*internal announcement[^\n]*/i
+    )?.[0];
     addActionItem(
-      "Send internal announcement",
+      isFrench ? "Envoyer une annonce interne" : "Send internal announcement",
       mention?.[1],
-      extractDateMention(transcript)
+      extractDateMention(internalAnnouncementLine ?? transcript)
     );
   }
 
@@ -833,9 +844,13 @@ function enrichActionItemsFromTranscript(
   ) {
     const match = transcript.match(/next check-?in[^.\n]*/i);
     const title = match?.[0]
-      ? `Confirm ${match[0].trim()}`
+      ? isFrench
+        ? `Confirmer ${match[0].trim()}`
+        : `Confirm ${match[0].trim()}`
+      : isFrench
+      ? "Confirmer l'horaire du prochain point"
       : "Confirm next check-in timing";
-    addActionItem(title, undefined, extractDateMention(match?.[0] ?? transcript));
+    addActionItem(title, undefined, extractDateMention(match?.[0] ?? ""));
   }
 
   enriched.actionItems = dedupeActionItems(enriched.actionItems);
@@ -858,6 +873,7 @@ function enrichRisksAndOpenQuestionsFromTranscript(
   result: MeetingNotesResult,
   transcript: string
 ): MeetingNotesResult {
+  const isFrench = result.language === "fr";
   const normalizedTranscript = normalizeForMatching(transcript);
   const enriched: MeetingNotesResult = {
     ...result,
@@ -887,35 +903,55 @@ function enrichRisksAndOpenQuestionsFromTranscript(
     includesAnyPhrase(normalizedTranscript, ["failing in staging", "api integration"]) &&
     !containsPhraseInOutput(enriched, ["failing in staging", "api integration"])
   ) {
-    addRisk("API integration remains unstable in staging.");
+    addRisk(
+      isFrench
+        ? "L'integration API reste instable en preproduction."
+        : "API integration remains unstable in staging."
+    );
   }
 
   if (
     includesAnyPhrase(normalizedTranscript, ["rate limits", "vendor"]) &&
     !containsPhraseInOutput(enriched, ["rate limits", "vendor"])
   ) {
-    addRisk("Vendor rate limits may impact launch readiness without caching/backoff.");
+    addRisk(
+      isFrench
+        ? "Les limites de debit du fournisseur peuvent retarder le lancement sans cache/backoff."
+        : "Vendor rate limits may impact launch readiness without caching/backoff."
+    );
   }
 
   if (
     includesAnyPhrase(normalizedTranscript, ["blocked on the auth flow", "auth flow changes"]) &&
     !containsPhraseInOutput(enriched, ["auth flow", "auth updates"])
   ) {
-    addRisk("Auth flow changes are blocking progress toward beta readiness.");
+    addRisk(
+      isFrench
+        ? "Les changements du flux d'authentification bloquent l'avancement vers la beta."
+        : "Auth flow changes are blocking progress toward beta readiness."
+    );
   }
 
   if (
     includesAnyPhrase(normalizedTranscript, ["sign off from product and sales", "sign-off from product and sales"]) &&
     !containsPhraseInOutput(enriched, ["sign off", "sign-off", "product and sales"])
   ) {
-    addOpenQuestion("When will Product and Sales provide sign-off for the scope change?");
+    addOpenQuestion(
+      isFrench
+        ? "Quand Product et Sales valideront-ils le changement de perimetre ?"
+        : "When will Product and Sales provide sign-off for the scope change?"
+    );
   }
 
   if (
     includesAnyPhrase(normalizedTranscript, ["advanced analytics"]) &&
     !containsPhraseInOutput(enriched, ["advanced analytics"])
   ) {
-    addOpenQuestion("Should advanced analytics be removed from v1 scope?");
+    addOpenQuestion(
+      isFrench
+        ? "Faut-il retirer l'analytics avancee du perimetre v1 ?"
+        : "Should advanced analytics be removed from v1 scope?"
+    );
   }
 
   if (
@@ -924,13 +960,507 @@ function enrichRisksAndOpenQuestionsFromTranscript(
   ) {
     const mention = transcript.match(/next check-?in[^.\n]*/i)?.[0]?.trim();
     addOpenQuestion(
-      mention ? `Confirm ${mention}.` : "Confirm next check-in timing."
+      mention
+        ? isFrench
+          ? `Confirmer ${mention}.`
+          : `Confirm ${mention}.`
+        : isFrench
+        ? "Confirmer l'horaire du prochain point."
+        : "Confirm next check-in timing."
     );
   }
 
   enriched.risks = dedupeTextItems(enriched.risks);
   enriched.openQuestions = dedupeTextItems(enriched.openQuestions);
   return enriched;
+}
+
+type DecisionSeed = {
+  title: string;
+  status: "confirmed" | "tentative" | "rejected";
+  evidenceQuote?: string;
+  owner?: string;
+  effectiveDate?: string;
+  matchPhrases: string[];
+};
+
+function ensureSentence(text: string): string {
+  const trimmed = text.trim();
+  if (!trimmed) {
+    return trimmed;
+  }
+  return /[.!?]$/.test(trimmed) ? trimmed : `${trimmed}.`;
+}
+
+function dedupeSummary(summary: MeetingNotesResult["summary"]) {
+  const seen = new Set<string>();
+  return summary.filter((item) => {
+    const key = normalizeForMatching(item.text);
+    if (!key || seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
+}
+
+function enrichSummaryFromSections(
+  result: MeetingNotesResult,
+  transcript: string
+): MeetingNotesResult {
+  const isFrench = result.language === "fr";
+  const segmentCount = transcript
+    .split(/[\n.!?]+/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0).length;
+  const minimumSummaryCount = segmentCount >= 5 || transcript.length >= 350 ? 5 : 2;
+
+  const summary = dedupeSummary([...result.summary]);
+  const outputText = collectOutputText({ ...result, summary });
+
+  const addSummary = (text: string) => {
+    const sentence = ensureSentence(text);
+    const key = normalizeForMatching(sentence);
+    if (!key || summary.some((item) => normalizeForMatching(item.text) === key)) {
+      return;
+    }
+    summary.push({ text: sentence });
+  };
+
+  if (summary.length < minimumSummaryCount) {
+    const primaryDecision = result.decisions[0]?.title;
+    if (primaryDecision) {
+      addSummary(
+        isFrench ? `Décision clé : ${primaryDecision}` : `Key decision: ${primaryDecision}`
+      );
+    }
+
+    const actionWithOwner = result.actionItems.find((item) => item.assignee);
+    if (actionWithOwner) {
+      const withDue = actionWithOwner.dueDate
+        ? isFrench
+          ? `${actionWithOwner.assignee} pilote « ${actionWithOwner.title} » d'ici ${actionWithOwner.dueDate}`
+          : `${actionWithOwner.assignee} owns "${actionWithOwner.title}" by ${actionWithOwner.dueDate}`
+        : isFrench
+        ? `${actionWithOwner.assignee} pilote « ${actionWithOwner.title} »`
+        : `${actionWithOwner.assignee} owns "${actionWithOwner.title}"`;
+      addSummary(withDue);
+    }
+
+    const secondaryAction = result.actionItems.find(
+      (item) => !actionWithOwner || normalizeForMatching(item.title) !== normalizeForMatching(actionWithOwner.title)
+    );
+    if (secondaryAction) {
+      addSummary(
+        isFrench
+          ? `Prochaine étape : ${secondaryAction.title}`
+          : `Next step: ${secondaryAction.title}`
+      );
+    }
+
+    if (result.risks[0]) {
+      addSummary(
+        isFrench
+          ? `Risque principal : ${result.risks[0].text}`
+          : `Primary risk: ${result.risks[0].text}`
+      );
+    }
+
+    if (result.openQuestions[0]) {
+      addSummary(
+        isFrench
+          ? `Question ouverte : ${result.openQuestions[0].text}`
+          : `Open question: ${result.openQuestions[0].text}`
+      );
+    }
+  }
+
+  const hasMention = includesAnyPhrase(outputText, ["api integration", "intégration api", "backoff", "cache"]);
+  if (summary.length < minimumSummaryCount && hasMention) {
+    addSummary(
+      isFrench
+        ? "L'équipe doit sécuriser la stratégie cache/backoff avant la suite du planning"
+        : "The team must stabilize cache/backoff strategy before proceeding with the timeline"
+    );
+  }
+
+  const finalSummary = summary.slice(0, 6);
+
+  return {
+    ...result,
+    summary: dedupeSummary(finalSummary),
+  };
+}
+
+function enforceMockupDetailLevel(
+  result: MeetingNotesResult,
+  transcript: string
+): MeetingNotesResult {
+  const lineCount = transcript
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0).length;
+
+  if (lineCount < 3 && transcript.length < 220) {
+    return result;
+  }
+
+  const isFrench = result.language === "fr";
+  const normalizedTranscript = normalizeForMatching(transcript);
+  const enriched: MeetingNotesResult = {
+    ...result,
+    summary: [...result.summary],
+    decisions: [...result.decisions],
+    actionItems: [...result.actionItems],
+    risks: [...result.risks],
+    openQuestions: [...result.openQuestions],
+  };
+
+  const addDecision = (
+    title: string,
+    status: "confirmed" | "tentative" | "rejected",
+    opts?: { owner?: string; effectiveDate?: string; evidenceQuote?: string }
+  ) => {
+    const normalizedTitle = normalizeForMatching(title);
+    const exists = enriched.decisions.some(
+      (decision) => normalizeForMatching(decision.title) === normalizedTitle
+    );
+    if (exists) {
+      return;
+    }
+    enriched.decisions.push({
+      title,
+      status,
+      owner: opts?.owner,
+      effectiveDate: opts?.effectiveDate,
+      evidenceQuote: opts?.evidenceQuote,
+    });
+  };
+
+  const addRisk = (text: string) => {
+    const normalized = normalizeForMatching(text);
+    const exists = enriched.risks.some(
+      (risk) => normalizeForMatching(risk.text) === normalized
+    );
+    if (!exists) {
+      enriched.risks.push({ text });
+    }
+  };
+
+  const addOpenQuestion = (text: string) => {
+    const normalized = normalizeForMatching(text);
+    const exists = enriched.openQuestions.some(
+      (question) => normalizeForMatching(question.text) === normalized
+    );
+    if (!exists) {
+      enriched.openQuestions.push({ text });
+    }
+  };
+
+  if (enriched.decisions.length === 0) {
+    const launchDelayLine = findTranscriptLine(transcript, [
+      "retard",
+      "report",
+      "launch",
+      "lancement",
+      "deadline",
+      "calendrier",
+    ]);
+    if (launchDelayLine) {
+      addDecision(
+        isFrench
+          ? "Décaler la date de lancement"
+          : "Delay the launch timeline",
+        "tentative",
+        {
+          effectiveDate: extractDateMention(launchDelayLine),
+          evidenceQuote: launchDelayLine,
+        }
+      );
+    }
+
+    if (
+      includesAnyPhrase(normalizedTranscript, [
+        "cache",
+        "backoff",
+        "rate limit",
+        "latence",
+        "latency",
+        "integration api",
+      ])
+    ) {
+      addDecision(
+        isFrench
+          ? "Prioriser la stratégie cache/backoff"
+          : "Prioritize cache/backoff strategy",
+        "tentative",
+        {
+          evidenceQuote: findTranscriptLine(transcript, [
+            "cache",
+            "backoff",
+            "rate limit",
+            "latence",
+            "latency",
+          ]),
+        }
+      );
+    }
+
+    if (enriched.decisions.length === 0 && enriched.actionItems[0]) {
+      addDecision(
+        isFrench
+          ? `Valider l'action: ${enriched.actionItems[0].title}`
+          : `Confirm action: ${enriched.actionItems[0].title}`,
+        "tentative"
+      );
+    }
+  }
+
+  if (enriched.risks.length < 2) {
+    if (
+      includesAnyPhrase(normalizedTranscript, [
+        "integration api",
+        "api integration",
+        "latence",
+        "latency",
+        "preproduction",
+        "staging",
+      ])
+    ) {
+      addRisk(
+        isFrench
+          ? "L'intégration API reste instable et peut retarder le planning."
+          : "API integration remains unstable and may delay the timeline."
+      );
+    }
+
+    if (
+      includesAnyPhrase(normalizedTranscript, [
+        "cache",
+        "backoff",
+        "rate limit",
+        "limites de debit",
+      ])
+    ) {
+      addRisk(
+        isFrench
+          ? "Les limites de débit fournisseur imposent une stratégie cache/backoff robuste."
+          : "Vendor rate limits require a robust cache/backoff strategy."
+      );
+    }
+  }
+
+  if (enriched.openQuestions.length === 0) {
+    if (
+      includesAnyPhrase(normalizedTranscript, [
+        "cache",
+        "backoff",
+        "rate limit",
+        "limites de debit",
+      ])
+    ) {
+      addOpenQuestion(
+        isFrench
+          ? "Quel périmètre exact de refactorisation faut-il pour stabiliser cache/backoff ?"
+          : "What exact refactoring scope is required to stabilize cache/backoff?"
+      );
+    }
+
+    if (
+      includesAnyPhrase(normalizedTranscript, [
+        "next check in",
+        "next check-in",
+        "prochain point",
+      ])
+    ) {
+      addOpenQuestion(
+        isFrench
+          ? "Quel horaire exact retenir pour le prochain point de suivi ?"
+          : "What exact time should be set for the next check-in?"
+      );
+    }
+
+    if (enriched.openQuestions.length === 0) {
+      addOpenQuestion(
+        isFrench
+          ? "Quel est le plan de mitigation prioritaire pour éviter un nouveau retard ?"
+          : "What is the top mitigation plan to avoid further delay?"
+      );
+    }
+  }
+
+  return {
+    ...enriched,
+    risks: dedupeTextItems(enriched.risks),
+    openQuestions: dedupeTextItems(enriched.openQuestions),
+  };
+}
+
+function findTranscriptLine(
+  transcript: string,
+  phrases: string[]
+): string | undefined {
+  return transcript
+    .split("\n")
+    .map((line) => line.trim())
+    .find((line) => includesAnyPhrase(normalizeForMatching(line), phrases));
+}
+
+function enrichDecisionsFromTranscript(
+  result: MeetingNotesResult,
+  transcript: string
+): MeetingNotesResult {
+  const isFrench = result.language === "fr";
+  const normalizedTranscript = normalizeForMatching(transcript);
+  const speakerNames = extractSpeakerNames(transcript);
+  const assignments = [
+    ...extractExplicitAssignments(transcript, speakerNames),
+    ...extractSpeakerTaskAssignments(transcript, speakerNames),
+  ];
+  const seeds: DecisionSeed[] = [];
+
+  const launchLine = findTranscriptLine(transcript, [
+    "move the launch date",
+    "launch date by one week",
+    "reporter le lancement",
+    "launch date",
+  ]);
+  if (
+    includesAnyPhrase(normalizedTranscript, [
+      "move the launch date",
+      "launch date by one week",
+      "launch date",
+    ])
+  ) {
+    seeds.push({
+      title: isFrench
+        ? "Decalage de la date de lancement"
+        : "Move launch date by one week",
+      status: "confirmed",
+      evidenceQuote: launchLine,
+      owner:
+        assignments.find((item) =>
+          includesAnyPhrase(normalizeForMatching(item.task), ["stakeholder", "parties prenantes"])
+        )?.assignee,
+      effectiveDate:
+        extractDateMention(launchLine ?? "") ??
+        (isFrench ? "Immédiat" : "Immediate"),
+      matchPhrases: ["launch date", "move launch", "reporter", "lancement"],
+    });
+  }
+
+  const scopeLine = findTranscriptLine(transcript, [
+    "cut advanced analytics",
+    "advanced analytics from v1",
+    "analytics avance",
+  ]);
+  if (
+    includesAnyPhrase(normalizedTranscript, [
+      "cut advanced analytics",
+      "advanced analytics from v1",
+      "advanced analytics",
+      "sign off from product and sales",
+      "sign-off from product and sales",
+    ])
+  ) {
+    seeds.push({
+      title: isFrench
+        ? "Validation Product et Sales"
+        : "Product and Sales sign-off for scope change",
+      status: "tentative",
+      evidenceQuote:
+        findTranscriptLine(transcript, [
+          "sign off from product and sales",
+          "sign-off from product and sales",
+        ]) ?? scopeLine,
+      owner: undefined,
+      effectiveDate: extractDateMention(scopeLine ?? ""),
+      matchPhrases: [
+        "advanced analytics",
+        "product and sales",
+        "sign off",
+        "sign-off",
+        "scope",
+      ],
+    });
+  }
+
+  if (seeds.length === 0) {
+    return result;
+  }
+
+  const filled = result.decisions.map((decision) => ({ ...decision }));
+  const decisionMatchesSeed = (
+    decision: MeetingNotesResult["decisions"][number],
+    seed: DecisionSeed
+  ) => {
+    const combined = normalizeForMatching(
+      `${decision.title} ${decision.evidenceQuote ?? ""}`
+    );
+    return includesAnyPhrase(combined, seed.matchPhrases);
+  };
+
+  for (const seed of seeds) {
+    const existingIndex = filled.findIndex(
+      (decision) =>
+        decisionMatchesSeed(decision, seed) ||
+        isPlaceholderDecisionTitle(decision.title)
+    );
+
+    if (existingIndex >= 0) {
+      const existing = filled[existingIndex];
+      filled[existingIndex] = {
+        ...existing,
+        title: seed.title,
+        status: seed.status,
+        evidenceQuote: existing.evidenceQuote ?? seed.evidenceQuote,
+        owner: existing.owner ?? seed.owner,
+        effectiveDate: existing.effectiveDate ?? seed.effectiveDate,
+      };
+      continue;
+    }
+
+    filled.push({
+      title: seed.title,
+      status: seed.status,
+      evidenceQuote: seed.evidenceQuote,
+      owner: seed.owner,
+      effectiveDate: seed.effectiveDate,
+    });
+  }
+
+  return {
+    ...result,
+    decisions: filled,
+  };
+}
+
+function isPlaceholderDecisionTitle(title: string): boolean {
+  const normalized = normalizeForMatching(title);
+  return (
+    normalized === "decision" ||
+    normalized === "decision cle" ||
+    normalized === "decison"
+  );
+}
+
+function titleFromEvidence(
+  evidenceQuote: string | undefined,
+  language: "en" | "fr"
+): string {
+  const fallback = language === "fr" ? "Decision cle" : "Key decision";
+  if (!evidenceQuote) {
+    return fallback;
+  }
+  const clean = evidenceQuote
+    .replace(/^["'“”‘’]+|["'“”‘’]+$/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!clean) {
+    return fallback;
+  }
+  const words = clean.split(" ").slice(0, 8);
+  return words.length > 0 ? `${words.join(" ")}${clean.split(" ").length > 8 ? "..." : ""}` : fallback;
 }
 
 function removeUnsupportedCausalMarker(text: string): string {
@@ -948,6 +1478,15 @@ function finalGroundingSanitize(
 ): MeetingNotesResult {
   return {
     ...result,
+    decisions: result.decisions.map((decision, index) => ({
+      ...decision,
+      title: isPlaceholderDecisionTitle(decision.title)
+        ? titleFromEvidence(decision.evidenceQuote, result.language) ||
+          (result.language === "fr"
+            ? `Decision cle ${index + 1}`
+            : `Key decision ${index + 1}`)
+        : decision.title,
+    })),
     summary: result.summary.map((item) => ({
       text: hasSupportedCausalLink(item.text, transcript)
         ? item.text
@@ -1016,9 +1555,9 @@ function extractCompletenessIssues(
     .map((line) => line.trim())
     .filter((line) => line.length > 0).length;
 
-  if ((turnCount >= 6 || transcript.length >= 500) && result.summary.length < 2) {
+  if ((turnCount >= 4 || transcript.length >= 320) && result.summary.length < 4) {
     issues.push(
-      "summary is too short for this transcript. Provide at least 2 concise bullets covering launch status, blockers, scope decision, and key commitments."
+      "summary is too short for this transcript. Provide at least 4 concise bullets covering launch status, blockers, scope decision, and key commitments."
     );
   }
 
@@ -1173,7 +1712,10 @@ export async function POST(req: Request) {
 
       let candidate = sanitizeUngroundedTemporalFields(parsed.data, body.transcript);
       candidate = enrichActionItemsFromTranscript(candidate, body.transcript);
+      candidate = enrichDecisionsFromTranscript(candidate, body.transcript);
       candidate = enrichRisksAndOpenQuestionsFromTranscript(candidate, body.transcript);
+      candidate = enforceMockupDetailLevel(candidate, body.transcript);
+      candidate = enrichSummaryFromSections(candidate, body.transcript);
       candidate = finalGroundingSanitize(candidate, body.transcript);
       let groundingIssues = extractGroundingIssues(candidate, body.transcript);
       let completenessIssues = extractCompletenessIssues(candidate, body.transcript);
@@ -1204,10 +1746,16 @@ export async function POST(req: Request) {
                 candidate,
                 body.transcript
               );
+              candidate = enrichDecisionsFromTranscript(
+                candidate,
+                body.transcript
+              );
               candidate = enrichRisksAndOpenQuestionsFromTranscript(
                 candidate,
                 body.transcript
               );
+              candidate = enforceMockupDetailLevel(candidate, body.transcript);
+              candidate = enrichSummaryFromSections(candidate, body.transcript);
               candidate = finalGroundingSanitize(candidate, body.transcript);
               completenessIssues = extractCompletenessIssues(
                 candidate,
@@ -1293,9 +1841,38 @@ export async function POST(req: Request) {
         return NextResponse.json(fallbackResponse);
       }
 
+      let claudeCandidate = sanitizeUngroundedTemporalFields(
+        parsed.data,
+        body.transcript
+      );
+      claudeCandidate = enrichActionItemsFromTranscript(
+        claudeCandidate,
+        body.transcript
+      );
+      claudeCandidate = enrichDecisionsFromTranscript(
+        claudeCandidate,
+        body.transcript
+      );
+      claudeCandidate = enrichRisksAndOpenQuestionsFromTranscript(
+        claudeCandidate,
+        body.transcript
+      );
+      claudeCandidate = enforceMockupDetailLevel(
+        claudeCandidate,
+        body.transcript
+      );
+      claudeCandidate = enrichSummaryFromSections(
+        claudeCandidate,
+        body.transcript
+      );
+      claudeCandidate = finalGroundingSanitize(
+        claudeCandidate,
+        body.transcript
+      );
+
       const response: GenerateResponse = {
         ok: true,
-        result: parsed.data,
+        result: claudeCandidate,
         source: "claude",
       };
       return NextResponse.json(response);

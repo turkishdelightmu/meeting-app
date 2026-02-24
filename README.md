@@ -85,6 +85,14 @@ This repository currently includes **Steps 1–8** of the implementation plan.
 - **Instrumentation** — lightweight `trackEvent()` logger that fires on `copy_text`, `copy_markdown`, `feedback_up`, `feedback_down`, `generate_start`, `generate_success`, `generate_error` — currently console-based, ready to swap in a real analytics provider
 - **Bilingual formatters** — plain-text and Markdown output uses i18n section headings matching the selected language
 
+## Post-Step 8 Refinements (Implemented)
+
+- **French mockup alignment** — success view now keeps the final section focused on `Risks & Blockers` and `Open Questions` (no separate “Important Dates” split)
+- **Detail floor for generated output** — `/api/generate` enforces richer structure for substantive transcripts (summary depth + non-empty decisions/risks/open questions)
+- **Deterministic transcript enrichment** — Claude and Ollama outputs are post-processed from transcript cues to reduce sparse or underspecified notes
+- **French-aware enrichment text** — fallback labels and inferred section content now respect output language (`en` / `fr`)
+- **Dev controls off by default** — header dev state controls are hidden unless `NEXT_PUBLIC_ENABLE_DEV_UI=true`
+
 ## Implementation Status
 
 | Step   | Description                                                   | Status  |
@@ -134,6 +142,7 @@ echo 'LLM_PROVIDER=ollama' >> .env.local
 # OLLAMA_TIMEOUT_MS=240000
 # OLLAMA_NUM_CTX=1024
 # OLLAMA_SKIP_REPAIR=true
+# NEXT_PUBLIC_ENABLE_DEV_UI=true
 
 # 4. Start the app as usual
 npm run dev
@@ -220,13 +229,14 @@ npx playwright test tests/e2e/step8-actions.spec.ts
 ## Project Structure (Key Files)
 
 - `src/app/api/detect/route.ts` — Step 3 language-detection stub API
-- `src/app/api/generate/route.ts` — Step 6 note-generation API (Claude or mock fallback)
+- `src/app/api/generate/route.ts` — note-generation API (Claude/Ollama/mock) with validation, grounding, enrichment, and detail enforcement
 - `src/lib/claude.ts` — Step 6 Claude SDK helper, system prompt, and `callClaude()` function
 - `src/lib/ollama.ts` — Optional Ollama provider, same interface as `callClaude()`
 - `docker-compose.ollama.yml` — Standalone compose file for running Ollama locally
 - `src/types/api.ts` — Step 3 typed request/response contracts
 - `src/app/meeting-note-cleaner/page.tsx` — main page, UI state machine, and Step 2 mock-data wiring
 - `src/components/stitch/` — Stitch-derived UI components and state views
+- `src/components/stitch/Header.tsx` — header with optional developer controls gated behind `NEXT_PUBLIC_ENABLE_DEV_UI`
 - `src/components/stitch/SuccessState.tsx` — Step 2 data-driven processed-notes renderer
 - `src/data/mock-meeting-notes.ts` — Step 2 mock output payload
 - `src/types/meeting-notes.ts` — Step 2 processed-notes schema

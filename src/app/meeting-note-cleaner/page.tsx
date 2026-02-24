@@ -14,7 +14,6 @@ import LoadingState from "@/components/stitch/LoadingState";
 import SuccessState from "@/components/stitch/SuccessState";
 import ValidationErrorState from "@/components/stitch/ValidationErrorState";
 import ModelRefusalState from "@/components/stitch/ModelRefusalState";
-import DevToggle from "@/components/stitch/DevToggle";
 import { trackEvent } from "@/lib/analytics";
 
 const DETECT_TIMEOUT_MS = 10_000;
@@ -314,7 +313,10 @@ export default function MeetingNoteCleanerPage() {
 
   return (
     <>
-      <Header />
+      <Header
+        currentState={effectiveState}
+        onDevStateChange={handleDevStateChange}
+      />
       <main className="flex-1 overflow-y-auto w-full max-w-[1600px] mx-auto p-4 md:p-6 lg:p-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-140px)]">
           {/* Left Column: Input */}
@@ -333,12 +335,6 @@ export default function MeetingNoteCleanerPage() {
           {renderOutputPanel()}
         </div>
       </main>
-
-      {/* DEV toggle for state switching */}
-      <DevToggle
-        currentState={effectiveState}
-        onStateChange={handleDevStateChange}
-      />
     </>
   );
 }
