@@ -17,6 +17,23 @@ import ModelRefusalState from "@/components/stitch/ModelRefusalState";
 import DevToggle from "@/components/stitch/DevToggle";
 import { trackEvent } from "@/lib/analytics";
 
+const DETECT_TIMEOUT_MS = 10_000;
+const GENERATE_TIMEOUT_MS = 240_000;
+
+async function fetchWithTimeout(
+  input: RequestInfo | URL,
+  init: RequestInit,
+  timeoutMs: number
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 export default function MeetingNoteCleanerPage() {
   const [transcript, setTranscript] = useState("");
   const [outputMode, setOutputMode] = useState<OutputMode>("auto");
@@ -66,11 +83,11 @@ export default function MeetingNoteCleanerPage() {
 
     const timeoutId = setTimeout(async () => {
       try {
-        const detectRes = await fetch("/api/detect", {
+        const detectRes = await fetchWithTimeout("/api/detect", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ transcript: trimmed }),
-        });
+        }, DETECT_TIMEOUT_MS);
 
         if (!detectRes.ok) {
           setAutoPreviewMode(null);
@@ -129,11 +146,11 @@ export default function MeetingNoteCleanerPage() {
   const callGenerate = useCallback(
     async (text: string, mode: OutputMode, { isRetry = false } = {}) => {
       try {
-        const res = await fetch("/api/generate", {
+        const res = await fetchWithTimeout("/api/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ transcript: text, outputMode: mode }),
-        });
+        }, GENERATE_TIMEOUT_MS);
 
         if (!res.ok) {
           setUiState(UIState.VALIDATION_ERROR);
@@ -181,7 +198,13 @@ export default function MeetingNoteCleanerPage() {
         }
       } catch (err) {
         trackEvent({ name: "generate_error", reason: "network" });
-        setValidationRaw(err instanceof Error ? err.message : String(err));
+        if (err instanceof Error && err.name === "AbortError") {
+          setValidationRaw(
+            `Request timed out after ${Math.round(GENERATE_TIMEOUT_MS / 1000)}s. If using Ollama, verify it is running and model loading is complete.`
+          );
+        } else {
+          setValidationRaw(err instanceof Error ? err.message : String(err));
+        }
         setUiState(UIState.VALIDATION_ERROR);
       }
     },
@@ -200,11 +223,11 @@ export default function MeetingNoteCleanerPage() {
       let resolvedMode: OutputMode = outputModeRef.current;
 
       if (outputModeRef.current === "auto") {
-        const detectRes = await fetch("/api/detect", {
+        const detectRes = await fetchWithTimeout("/api/detect", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ transcript: transcriptRef.current }),
-        });
+        }, DETECT_TIMEOUT_MS);
 
         if (detectRes.ok) {
           const { language }: DetectResponse = await detectRes.json();

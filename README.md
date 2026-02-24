@@ -106,12 +106,76 @@ All 8 steps are complete. Future enhancements could include:
 - Real analytics provider integration (Mixpanel, PostHog, etc.)
 - Server-side copy fallback for older browsers
 
+## Optional: Local LLM via Ollama
+
+You can run generation against a **local Ollama** instance instead of Claude.
+The existing workflow is completely unaffected — Ollama is only used when you
+explicitly opt in.
+
+### Setup
+
+```bash
+# 1. Start Ollama (pick one)
+
+# Option A — Docker (recommended, no local install)
+docker compose -f docker-compose.ollama.yml up -d
+
+# Option B — Native install (macOS)
+brew install ollama && ollama serve      # leave running in a separate tab
+
+# 2. Pull a model (once)
+ollama pull llama3.2       # ~2 GB — or any model that supports JSON mode
+
+# 3. Enable the provider in .env.local
+echo 'LLM_PROVIDER=ollama' >> .env.local
+# Optionally override defaults:
+# OLLAMA_BASE_URL=http://127.0.0.1:11434
+# OLLAMA_MODEL=llama3.2:latest
+# OLLAMA_TIMEOUT_MS=240000
+# OLLAMA_NUM_CTX=1024
+# OLLAMA_SKIP_REPAIR=true
+
+# 4. Start the app as usual
+npm run dev
+```
+
+### Smoke Test
+
+```bash
+# Verify Ollama is reachable
+curl -s http://127.0.0.1:11434/api/tags | head -c 200
+
+# Hit the generate endpoint
+curl -s http://localhost:3000/api/generate \
+  -H 'Content-Type: application/json' \
+  -d '{"transcript":"Alice: Let us ship v2 by Friday. Bob: Agreed, I will update the docs.","outputMode":"force_en"}' \
+  | python3 -m json.tool
+```
+
+A successful response contains `"source": "ollama"` and structured meeting
+notes. If Ollama is unreachable you'll get `"reason": "server_error"` — the
+app never silently falls back to mock data when Ollama is selected.
+
+### Performance Notes
+
+- On Intel (`x86_64`) Macs, Ollama runs CPU-only; MLX/GPU warnings are expected.
+- If `localhost` reachability is flaky, set `OLLAMA_BASE_URL=http://127.0.0.1:11434`.
+- `OLLAMA_SKIP_REPAIR=true` trades some quality for speed by skipping the second repair pass.
+- For higher quality, set `OLLAMA_SKIP_REPAIR=false` and allow a longer timeout.
+
+### Switching Back
+
+Remove (or comment out) `LLM_PROVIDER=ollama` from `.env.local` and restart
+the dev server. The app reverts to its default behaviour (Claude if
+`ANTHROPIC_API_KEY` is set, mock data otherwise).
+
 ## Tech Stack
 
 - Next.js 14 (App Router)
 - TypeScript
 - Tailwind CSS
 - Anthropic SDK (`@anthropic-ai/sdk`) — Claude integration
+- Ollama (optional) — local LLM provider via REST API
 - Zod — runtime schema validation
 - Playwright — E2E testing
 
@@ -158,6 +222,8 @@ npx playwright test tests/e2e/step8-actions.spec.ts
 - `src/app/api/detect/route.ts` — Step 3 language-detection stub API
 - `src/app/api/generate/route.ts` — Step 6 note-generation API (Claude or mock fallback)
 - `src/lib/claude.ts` — Step 6 Claude SDK helper, system prompt, and `callClaude()` function
+- `src/lib/ollama.ts` — Optional Ollama provider, same interface as `callClaude()`
+- `docker-compose.ollama.yml` — Standalone compose file for running Ollama locally
 - `src/types/api.ts` — Step 3 typed request/response contracts
 - `src/app/meeting-note-cleaner/page.tsx` — main page, UI state machine, and Step 2 mock-data wiring
 - `src/components/stitch/` — Stitch-derived UI components and state views
@@ -167,7 +233,7 @@ npx playwright test tests/e2e/step8-actions.spec.ts
 - `src/lib/i18n.ts` — Step 7 bilingual label map (EN/FR) for SuccessState UI strings
 - `src/lib/format.ts` — Step 8 plain-text and Markdown formatters for MeetingNotesResult
 - `src/lib/analytics.ts` — Step 8 lightweight event logger (console-based, swappable)
-- `src/types/api.ts` — includes `GenerateResponse` source metadata (`claude` / `mock`)
+- `src/types/api.ts` — includes `GenerateResponse` source metadata (`claude` / `ollama` / `mock`)
 - `src/schemas/meeting-notes.ts` — Step 5 Zod validation schemas for MeetingNotesResult
 - `tests/e2e/step5-retry.spec.ts` — Step 5 deterministic E2E coverage for retry-once behavior
 - `tests/e2e/step8-actions.spec.ts` — Step 8 E2E coverage for copy actions, feedback toggles, and analytics logs
@@ -179,6 +245,6 @@ npx playwright test tests/e2e/step8-actions.spec.ts
 - No auth and no database persistence are implemented yet.
 - Root route (`/`) redirects to `/meeting-note-cleaner`.
 - With `ANTHROPIC_API_KEY` set, Claude generates real structured notes. Without it, mock data is returned.
-- Success header displays `Source: Claude` or `Source: Mock` for each run.
+- Success header displays `Source: Claude`, `Source: Ollama`, or `Source: Mock` for each run.
 - Success content and UI labels are fully bilingual (English/French) as of Step 7.
 - Copy and feedback actions are fully wired as of Step 8; analytics events log to console.

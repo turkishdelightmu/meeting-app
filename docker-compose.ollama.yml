@@ -1,0 +1,15 @@
+# Ollama-only compose file — does NOT touch the existing app setup.
+# Usage:  docker compose -f docker-compose.ollama.yml up -d
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: meeting-app-ollama
+    ports:
+      - "11434:11434" # default Ollama API port
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+
+volumes:
+  ollama_data:

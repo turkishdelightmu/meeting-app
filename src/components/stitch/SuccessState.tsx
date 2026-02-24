@@ -57,15 +57,49 @@ function avatarColor(initial: string) {
   return avatarPalettes[initial] ?? "bg-slate-200 text-slate-600";
 }
 
+function isLikelyDateLine(text: string): boolean {
+  const value = text.toLowerCase();
+  return (
+    /next check-?in|prochain point/.test(value) ||
+    /\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/.test(value) ||
+    /\b(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\b/.test(value) ||
+    /\b\d{1,2}(?::\d{2})?\s?(am|pm)\b/.test(value) ||
+    /\b\d{1,2}h(\d{2})?\b/.test(value) ||
+    /\b(today|tomorrow|aujourd'hui|aujourd’hui|demain)\b/.test(value)
+  );
+}
+
+function normalizeDisplayTitle(value: string): string {
+  const trimmed = value.trim().replace(/[.;]+$/g, "");
+  if (!trimmed) {
+    return value;
+  }
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+}
+
 // ── component ────────────────────────────────────────────────────────────────
 
 interface SuccessStateProps {
   data: MeetingNotesResult;
-  source: "claude" | "mock";
+  source: "claude" | "ollama" | "mock";
 }
 
 export default function SuccessState({ data, source }: SuccessStateProps) {
   const t = getLabels(data.language);
+  const importantDates = data.openQuestions.filter((q) => isLikelyDateLine(q.text));
+  const displayOpenQuestions = data.openQuestions.filter(
+    (q) => !isLikelyDateLine(q.text)
+  );
+  const infoCardCount =
+    (data.risks.length > 0 ? 1 : 0) +
+    (importantDates.length > 0 ? 1 : 0) +
+    (displayOpenQuestions.length > 0 ? 1 : 0);
+  const infoGridClass =
+    infoCardCount >= 3
+      ? "grid-cols-1 md:grid-cols-3"
+      : infoCardCount === 2
+      ? "grid-cols-1 md:grid-cols-2"
+      : "grid-cols-1";
 
   // ── Step 8: copy + feedback state ──────────────────────────────────────────
   const [copyToast, setCopyToast] = useState<string | null>(null);
@@ -119,7 +153,7 @@ export default function SuccessState({ data, source }: SuccessStateProps) {
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-slate-500 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-1 rounded-full shadow-sm">
-            {t.sourceLabel}: {source === "claude" ? t.sourceClaude : t.sourceMock}
+            {t.sourceLabel}: {source === "claude" ? t.sourceClaude : source === "ollama" ? t.sourceOllama : t.sourceMock}
           </span>
           <span className="text-xs font-medium text-slate-500 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-1 rounded-full shadow-sm flex items-center gap-1">
             <span className={`w-1.5 h-1.5 rounded-full ${confidenceColor[data.confidence]}`} />
@@ -171,7 +205,7 @@ export default function SuccessState({ data, source }: SuccessStateProps) {
                     {/* title + badge */}
                     <div className="flex justify-between items-start mb-3">
                       <h4 className="text-lg font-semibold text-slate-900 dark:text-white leading-tight">
-                        {d.title}
+                        {normalizeDisplayTitle(d.title)}
                       </h4>
                       <span
                         className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${s.bg} ${s.text} shrink-0 ml-3`}
@@ -229,10 +263,7 @@ export default function SuccessState({ data, source }: SuccessStateProps) {
               </h3>
               <div className="bg-slate-50 dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 divide-y divide-slate-100 dark:divide-slate-700">
                 {data.actionItems.map((item, i) => (
-                  <div
-                    key={i}
-                    className="p-4 flex items-start gap-4 hover:bg-white dark:hover:bg-slate-700/50 transition-colors"
-                  >
+                  <div key={i} className="p-4 flex items-start gap-4 hover:bg-white dark:hover:bg-slate-700/50 transition-colors">
                     <div className="mt-1">
                       <input
                         type="checkbox"
@@ -243,7 +274,7 @@ export default function SuccessState({ data, source }: SuccessStateProps) {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-4 mb-1">
                         <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                          {item.title}
+                          {normalizeDisplayTitle(item.title)}
                         </p>
                         {item.priority && (
                           <span
@@ -254,16 +285,19 @@ export default function SuccessState({ data, source }: SuccessStateProps) {
                         )}
                       </div>
                       <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
-                        {item.assignee && (
-                          <div className="flex items-center gap-1">
-                            <div
-                              className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] ${avatarColor(item.assigneeInitial ?? item.assignee[0])}`}
-                            >
-                              {item.assigneeInitial ?? item.assignee[0]}
+                        {item.assignee && (() => {
+                          const displayInitial = item.assignee.trim().charAt(0).toUpperCase();
+                          return (
+                            <div className="flex items-center gap-1">
+                              <div
+                                className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] ${avatarColor(displayInitial)}`}
+                              >
+                                {displayInitial}
+                              </div>
+                              <span>{item.assignee}</span>
                             </div>
-                            <span>{item.assignee}</span>
-                          </div>
-                        )}
+                          );
+                        })()}
                         {item.dueDate && (
                           <div className="flex items-center gap-1">
                             <span className="material-symbols-outlined text-[14px]">event</span>
@@ -278,9 +312,9 @@ export default function SuccessState({ data, source }: SuccessStateProps) {
             </div>
           )}
 
-          {/* 4 ▸ Risks & Open Questions (side-by-side grid) */}
-          {(data.risks.length > 0 || data.openQuestions.length > 0) && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* 4 ▸ Risks, Important Dates, Open Questions */}
+          {(data.risks.length > 0 || importantDates.length > 0 || displayOpenQuestions.length > 0) && (
+            <div className={`grid ${infoGridClass} gap-6`}>
               {/* Risks */}
               {data.risks.length > 0 && (
                 <div className="bg-red-50 dark:bg-red-900/10 rounded-xl p-5 border border-red-100 dark:border-red-900/30">
@@ -299,15 +333,33 @@ export default function SuccessState({ data, source }: SuccessStateProps) {
                 </div>
               )}
 
+              {/* Important Dates */}
+              {importantDates.length > 0 && (
+                <div className="bg-blue-50 dark:bg-blue-900/10 rounded-xl p-5 border border-blue-100 dark:border-blue-900/30">
+                  <h3 className="flex items-center gap-2 text-sm font-bold text-blue-800 dark:text-blue-400 uppercase tracking-wider mb-3">
+                    <span className="material-symbols-outlined text-lg">event</span>
+                    {t.importantDates}
+                  </h3>
+                  <ul className="space-y-2">
+                    {importantDates.map((q, i) => (
+                      <li key={i} className="text-sm text-blue-900/80 dark:text-blue-200 flex gap-2">
+                        <span className="mt-1.5 w-1 h-1 rounded-full bg-blue-400 shrink-0" />
+                        <span>{q.text}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               {/* Open Questions */}
-              {data.openQuestions.length > 0 && (
+              {displayOpenQuestions.length > 0 && (
                 <div className="bg-amber-50 dark:bg-amber-900/10 rounded-xl p-5 border border-amber-100 dark:border-amber-900/30">
                   <h3 className="flex items-center gap-2 text-sm font-bold text-amber-800 dark:text-amber-400 uppercase tracking-wider mb-3">
                     <span className="material-symbols-outlined text-lg">help</span>
                     {t.openQuestions}
                   </h3>
                   <ul className="space-y-2">
-                    {data.openQuestions.map((q, i) => (
+                    {displayOpenQuestions.map((q, i) => (
                       <li key={i} className="text-sm text-amber-900/80 dark:text-amber-200 flex gap-2">
                         <span className="mt-1.5 w-1 h-1 rounded-full bg-amber-400 shrink-0" />
                         <span>{q.text}</span>

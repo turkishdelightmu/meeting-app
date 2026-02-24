@@ -109,9 +109,6 @@ export default function InputPanel({
           disabled={!canGenerate}
           onClick={onGenerate}
         >
-          <span className="material-symbols-outlined text-[18px]">
-            auto_awesome
-          </span>
           Generate Notes
         </button>
       </div>

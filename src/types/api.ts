@@ -21,7 +21,7 @@ export interface DetectResponse {
 
 // ── /api/generate ─────────────────────────────────────────────────────────────
 
-export type GenerateSource = "claude" | "mock";
+export type GenerateSource = "claude" | "ollama" | "mock";
 
 export interface GenerateRequest {
   transcript: string;

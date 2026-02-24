@@ -10,6 +10,7 @@ export interface UILabels {
   processedNotes: string;
   sourceLabel: string;
   sourceClaude: string;
+  sourceOllama: string;
   sourceMock: string;
   aiConfidence: string;
 
@@ -20,6 +21,7 @@ export interface UILabels {
   executiveSummary: string;
   keyDecisions: string;
   nextSteps: string;
+  importantDates: string;
   risksAndBlockers: string;
   openQuestions: string;
 
@@ -44,6 +46,7 @@ const en: UILabels = {
   processedNotes: "Processed Notes",
   sourceLabel: "Source",
   sourceClaude: "Claude",
+  sourceOllama: "Ollama",
   sourceMock: "Mock",
   aiConfidence: "AI Confidence",
 
@@ -52,6 +55,7 @@ const en: UILabels = {
   executiveSummary: "Executive Summary",
   keyDecisions: "Key Decisions",
   nextSteps: "Next Steps",
+  importantDates: "Important Dates",
   risksAndBlockers: "Risks & Blockers",
   openQuestions: "Open Questions",
 
@@ -72,6 +76,7 @@ const fr: UILabels = {
   processedNotes: "Notes traitées",
   sourceLabel: "Source",
   sourceClaude: "Claude",
+  sourceOllama: "Ollama",
   sourceMock: "Simulé",
   aiConfidence: "Confiance IA",
 
@@ -80,6 +85,7 @@ const fr: UILabels = {
   executiveSummary: "Résumé exécutif",
   keyDecisions: "Décisions clés",
   nextSteps: "Prochaines étapes",
+  importantDates: "Dates importantes",
   risksAndBlockers: "Risques et blocages",
   openQuestions: "Questions ouvertes",
 
